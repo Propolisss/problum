@@ -16,21 +16,29 @@ const (
 	defaultServerReadTimeout     = time.Duration(30) * time.Second
 	defaultServerWriteTimeout    = time.Duration(30) * time.Second
 	defaultServerShutdownTimeout = time.Duration(10) * time.Second
+	defaultServerEnvironment     = "dev"
 
 	// db
-	defaultDBHost          = "postgres"
-	defaultDBPort          = 5432
-	defaultUser            = "problum"
-	defaultDBName          = "problum"
-	defaultSSLMode         = "disable"
-	defaultMaxOpenConns    = 200
-	defaultMaxIdleConns    = 20
-	defaultConnMaxLifetime = time.Duration(300) * time.Second
+	defaultDBHost            = "postgres"
+	defaultDBPort            = 5432
+	defaultDBUser            = "problum"
+	defaultDBName            = "problum"
+	defaultDBSSLMode         = "disable"
+	defaultDBMaxOpenConns    = 200
+	defaultDBMaxIdleConns    = 20
+	defaultDBConnMaxLifetime = time.Duration(300) * time.Second
+
+	// redis
+	defaultRedisHost     = "0.0.0.0"
+	defaultRedisPort     = 6379
+	defaultRedisPassword = ""
+	defaultRedisDB       = 0
 )
 
 type Config struct {
 	Server *Server
 	DB     *DB
+	Redis  *Redis
 }
 
 type Server struct {
@@ -39,6 +47,7 @@ type Server struct {
 	ReadTimeout     time.Duration `mapstructure:"read_timeout"`
 	WriteTimeout    time.Duration `mapstructure:"write_timeout"`
 	ShutdownTimeout time.Duration `mapstructure:"shutdown_timeout"`
+	Environment     string        `mapstructure:"environment"`
 }
 
 type DB struct {
@@ -53,6 +62,13 @@ type DB struct {
 	ConnMaxLifetime time.Duration `mapstructure:"conn_max_lifetime"`
 }
 
+type Redis struct {
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	Password string `mapstructure:"password"`
+	DB       int    `mapstructure:"db"`
+}
+
 func readServerConfig() *Server {
 	return &Server{
 		Host:            viper.GetString("server.host"),
@@ -60,6 +76,7 @@ func readServerConfig() *Server {
 		ReadTimeout:     viper.GetDuration("server.read_timeout"),
 		WriteTimeout:    viper.GetDuration("server.write_timeout"),
 		ShutdownTimeout: viper.GetDuration("server.shutdown_timeout"),
+		Environment:     viper.GetString("server.environment"),
 	}
 }
 
@@ -77,12 +94,39 @@ func readDBConfig() *DB {
 	}
 }
 
+func readRedisConfig() *Redis {
+	return &Redis{
+		Host:     viper.GetString("redis.host"),
+		Port:     viper.GetInt("redis.port"),
+		Password: viper.GetString("redis.password"),
+		DB:       viper.GetInt("redis.db"),
+	}
+}
+
 func setDefault() {
+	// server
 	viper.SetDefault("server.host", defaultServerHost)
 	viper.SetDefault("server.port", defaultServerPort)
 	viper.SetDefault("server.read_timeout", defaultServerReadTimeout)
 	viper.SetDefault("server.write_timeout", defaultServerWriteTimeout)
 	viper.SetDefault("server.shutdown_timeout", defaultServerShutdownTimeout)
+	viper.SetDefault("server.environment", defaultServerEnvironment)
+
+	// db
+	viper.SetDefault("db.host", defaultDBHost)
+	viper.SetDefault("db.port", defaultDBPort)
+	viper.SetDefault("db.user", defaultDBUser)
+	viper.SetDefault("db.db_name", defaultDBName)
+	viper.SetDefault("db.ssl_mode", defaultDBSSLMode)
+	viper.SetDefault("db.max_open_conns", defaultDBMaxOpenConns)
+	viper.SetDefault("db.max_idle_conns", defaultDBMaxIdleConns)
+	viper.SetDefault("db.max_lifetime", defaultDBConnMaxLifetime)
+
+	// redis
+	viper.SetDefault("redis.host", defaultRedisHost)
+	viper.SetDefault("redis.port", defaultRedisPort)
+	viper.SetDefault("redis.password", defaultRedisPassword)
+	viper.SetDefault("redis.db", defaultRedisDB)
 }
 
 func (c *DB) GetDSN() string {
@@ -95,6 +139,14 @@ func (c *DB) GetDSN() string {
 		c.DBName,
 		c.SSLMode,
 	)
+}
+
+func (s *Server) IsProduction() bool {
+	return s.Environment == "prod"
+}
+
+func (cfg *Config) IsProduction() bool {
+	return cfg.Server.IsProduction()
 }
 
 func New() (*Config, error) {
@@ -110,9 +162,11 @@ func New() (*Config, error) {
 	setDefault()
 	serverConfig := readServerConfig()
 	dbConfig := readDBConfig()
+	redisConfig := readRedisConfig()
 
 	return &Config{
 		Server: serverConfig,
 		DB:     dbConfig,
+		Redis:  redisConfig,
 	}, nil
 }
