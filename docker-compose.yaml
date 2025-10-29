@@ -1,6 +1,8 @@
 services:
   backend:
-    build: ./apps/backend/
+    build:
+      context: ./apps/backend/
+      dockerfile: Dockerfile.app
     ports:
       - "8080:8080"
     environment:
@@ -9,6 +11,8 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      nats:
         condition: service_healthy
   
   postgres:
@@ -44,6 +48,33 @@ services:
     volumes:
       - redis_volume:/data
 
+  nats:
+    image: "nats:2.12.1-alpine3.22"
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: [ "-js", "-sd", "/data", "-m", "8222"]
+    volumes:
+      - nats_volume:/data
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q --spider -T 5 http://localhost:8222/jsz?js-ready=true || exit 1" ]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    build:
+      context: ./apps/backend/
+      dockerfile: Dockerfile.worker
+    privileged: true
+    # cgroup: host
+    environment:
+      - PROBLUM_CONFIG_FILE=/worker/config.yml
+    depends_on:
+      backend:
+        condition: service_started
+
 volumes:
   postgres_volume:
   redis_volume:
+  nats_volume:
