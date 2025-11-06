@@ -1,0 +1,26 @@
+FROM golang:1.25.3-bookworm AS builder 
+
+RUN apt-get update && \
+    apt-get install -y ca-certificates curl gnupg && \
+    apt-get install -y python3 python3-pip
+
+RUN install -d -m 0755 /etc/apt/keyrings && \
+    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/isolate.asc] http://www.ucw.cz/isolate/debian/ bookworm-isolate main" > /etc/apt/sources.list.d/isolate.list && \
+    curl -fsSl https://www.ucw.cz/isolate/debian/signing-key.asc >/etc/apt/keyrings/isolate.asc
+
+RUN apt update && apt-get install -y --no-install-recommends isolate && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN chmod 4755 /usr/bin/isolate
+
+WORKDIR /worker
+
+COPY go.mod go.mod ./
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/worker/worker.go
+
+# CMD [ "/bin/sh", "-c", "isolate-cg-keeper & ./main" ]
+CMD [ "./main" ]

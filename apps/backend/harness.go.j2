@@ -1,0 +1,23 @@
+package main
+
+type TestCase struct {
+    {% for param in parameters %}
+    {{ param.name | capfirst }} {{ param.type }} `json:"{{ param.name }}"`
+    {% endfor %}
+}
+
+func main() {
+    input, _ := ioutil.ReadAll(os.Stdin)
+
+    testCase := &TestCase{}
+    json.Unmarshal(input, testCase)
+
+    result := {{ function_name }}(
+        {% for param in parameters %}
+        testCase.{{ param.name | capfirst }},
+        {% endfor %}
+    )
+
+    jsonResult, _ := json.Marshal(result)
+    os.Stdout.Write(jsonResult)
+}

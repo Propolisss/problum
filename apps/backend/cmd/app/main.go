@@ -9,12 +9,12 @@ import (
 func main() {
 	app, err := app.New()
 	if err != nil {
-		log.Error().Err(err).Msg("failed to create application")
+		log.Error().Err(err).Msg("Failed to create application")
 		return
 	}
 
 	if err = app.Run(); err != nil {
-		log.Error().Err(err).Msg("failed to run application")
+		log.Error().Err(err).Msg("Failed to run application")
 		return
 	}
 }

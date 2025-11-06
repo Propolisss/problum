@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"problum/internal/auth/service/dto"
-	"problum/internal/database"
 	"problum/internal/model"
 	"problum/internal/redis"
 	"problum/internal/utils"
@@ -15,6 +14,7 @@ import (
 	sessionRepo "problum/internal/session/repository"
 	userRepo "problum/internal/user/repository"
 
+	"github.com/bytedance/sonic"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -35,15 +35,13 @@ type SessionService interface {
 }
 
 type Service struct {
-	db         *database.DB
 	rdb        *redis.Redis
 	userSvc    UserService
 	sessionSvc SessionService
 }
 
-func New(db *database.DB, rdb *redis.Redis, userSvc UserService, sessionSvc SessionService) *Service {
+func New(rdb *redis.Redis, userSvc UserService, sessionSvc SessionService) *Service {
 	return &Service{
-		db:         db,
 		rdb:        rdb,
 		userSvc:    userSvc,
 		sessionSvc: sessionSvc,
@@ -114,7 +112,13 @@ func (s *Service) Login(ctx context.Context, login, password string) (*dto.Login
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
 
-	if err = s.rdb.Set(ctx, fmt.Sprintf("user_sessions:%s", accessToken), us.ID, 15*time.Minute); err != nil {
+	sessionJSON, err := sonic.Marshal(us)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to marshal session")
+		return nil, fmt.Errorf("failed to marshal session: %w", err)
+	}
+
+	if err = s.rdb.Set(ctx, fmt.Sprintf("user_sessions:%s", accessToken), sessionJSON, 15*time.Minute); err != nil {
 		log.Error().Err(err).Msg("Failed to create session in Redis")
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
@@ -127,7 +131,7 @@ func (s *Service) Login(ctx context.Context, login, password string) (*dto.Login
 	return &dto.LoginDTO{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		ExpiresAt:    123 * time.Second,
+		ExpiresAt:    15 * time.Minute,
 	}, nil
 }
 
@@ -187,7 +191,13 @@ func (s *Service) Refresh(ctx context.Context, refresh string) (*dto.RefreshDTO,
 		return nil, fmt.Errorf("failed to refresh session: %w", err)
 	}
 
-	if err = s.rdb.Set(ctx, fmt.Sprintf("user_sessions:%s", newAccess), session.ID, 15*time.Minute); err != nil {
+	sessionJSON, err := sonic.Marshal(session)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to marshal session")
+		return nil, fmt.Errorf("failed to marshal session: %w", err)
+	}
+
+	if err = s.rdb.Set(ctx, fmt.Sprintf("user_sessions:%s", newAccess), sessionJSON, 15*time.Minute); err != nil {
 		log.Error().Err(err).Msg("Failed to create session in Redis")
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
@@ -200,7 +210,7 @@ func (s *Service) Refresh(ctx context.Context, refresh string) (*dto.RefreshDTO,
 	return &dto.RefreshDTO{
 		AccessToken:  newAccess,
 		RefreshToken: newRefresh,
-		ExpiresAt:    123 * time.Second,
+		ExpiresAt:    15 * time.Minute,
 	}, nil
 }
 

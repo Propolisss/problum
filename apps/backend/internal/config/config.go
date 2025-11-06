@@ -33,12 +33,17 @@ const (
 	defaultRedisPort     = 6379
 	defaultRedisPassword = ""
 	defaultRedisDB       = 0
+
+	// nats
+	defaultNatsHost = "0.0.0.0"
+	defaultNatsPort = 4222
 )
 
 type Config struct {
 	Server *Server
 	DB     *DB
 	Redis  *Redis
+	Nats   *Nats
 }
 
 type Server struct {
@@ -67,6 +72,11 @@ type Redis struct {
 	Port     int    `mapstructure:"port"`
 	Password string `mapstructure:"password"`
 	DB       int    `mapstructure:"db"`
+}
+
+type Nats struct {
+	Host string `mapstructure:"host"`
+	Port int    `mapstructure:"port"`
 }
 
 func readServerConfig() *Server {
@@ -103,6 +113,13 @@ func readRedisConfig() *Redis {
 	}
 }
 
+func readNatsConfig() *Nats {
+	return &Nats{
+		Host: viper.GetString("nats.host"),
+		Port: viper.GetInt("nats.port"),
+	}
+}
+
 func setDefault() {
 	// server
 	viper.SetDefault("server.host", defaultServerHost)
@@ -127,6 +144,10 @@ func setDefault() {
 	viper.SetDefault("redis.port", defaultRedisPort)
 	viper.SetDefault("redis.password", defaultRedisPassword)
 	viper.SetDefault("redis.db", defaultRedisDB)
+
+	// nats
+	viper.SetDefault("nats.host", defaultNatsHost)
+	viper.SetDefault("nats.port", defaultNatsPort)
 }
 
 func (c *DB) GetDSN() string {
@@ -163,10 +184,12 @@ func New() (*Config, error) {
 	serverConfig := readServerConfig()
 	dbConfig := readDBConfig()
 	redisConfig := readRedisConfig()
+	natsConifg := readNatsConfig()
 
 	return &Config{
 		Server: serverConfig,
 		DB:     dbConfig,
 		Redis:  redisConfig,
+		Nats:   natsConifg,
 	}, nil
 }

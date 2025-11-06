@@ -3,10 +3,13 @@ module problum
 go 1.25.0
 
 require (
+	github.com/flosch/pongo2/v6 v6.0.0
 	github.com/gofiber/fiber/v3 v3.0.0-rc.2
+	github.com/nats-io/nats.go v1.47.0
 	github.com/redis/go-redis/v9 v9.14.1
 	github.com/rs/zerolog v1.34.0
 	golang.org/x/crypto v0.43.0
+	golang.org/x/tools v0.38.0
 )
 
 require (
@@ -26,6 +29,8 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.9 // indirect
+	github.com/nats-io/nkeys v0.4.11 // indirect
+	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -41,7 +46,8 @@ require (
 	github.com/valyala/fasthttp v1.65.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
-	golang.org/x/net v0.45.0 // indirect
+	golang.org/x/mod v0.29.0 // indirect
+	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
 )

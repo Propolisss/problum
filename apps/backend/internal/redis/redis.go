@@ -49,7 +49,7 @@ func (r *Redis) SetString(ctx context.Context, key, value string, ttl time.Durat
 	return r.Set(ctx, key, value, ttl)
 }
 
-func (r *Redis) Get(ctx context.Context, key string) (any, error) {
+func (r *Redis) Get(ctx context.Context, key string) ([]byte, error) {
 	return r.rdb.Get(ctx, key).Bytes()
 }
 
