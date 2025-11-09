@@ -33,7 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const tryRefresh = async (): Promise<boolean> => {
         try {
-            const resp = await axios.post('/auth/refresh', null, { withCredentials: true });
+            const resp = await axios.post('/api/auth/refresh', null, { withCredentials: true });
             const token = resp.data?.access_token;
             if (!token) throw new Error('no token');
             setAccessTokenState(token);

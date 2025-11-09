@@ -62,7 +62,7 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const resp = await axios.post('/auth/refresh', null, { withCredentials: true });
+        const resp = await axios.post('/api/auth/refresh', null, { withCredentials: true });
         const newToken = resp.data?.access_token;
         if (!newToken) throw new Error('no access token on refresh');
 

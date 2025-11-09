@@ -1,0 +1,90 @@
+services:
+  frontend:
+    build:
+      context: ./apps/frontend/
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_started
+  
+  backend:
+    build:
+      context: ./apps/backend/
+      dockerfile: Dockerfile.app
+    ports:
+      - "8080:8080"
+    environment:
+      - PROBLUM_CONFIG_FILE=/app/config.yml
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+  
+  postgres:
+    image: "postgres:18-alpine"
+    environment:
+      - POSTGRES_DB=problum
+      - POSTGRES_USER=problum
+      - POSTGRES_PASSWORD=problum
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_volume:/var/lib/postgresql/data
+      - ./apps/backend/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U problum" ]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: "redis:8.2.2-alpine"
+    environment:
+      - name=value
+    ports:
+      - "6379:6379"
+    restart: always
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+    command: redis-server --save 20 1 --loglevel warning
+    volumes:
+      - redis_volume:/data
+
+  nats:
+    image: "nats:2.12.1-alpine3.22"
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: [ "-js", "-sd", "/data", "-m", "8222"]
+    volumes:
+      - nats_volume:/data
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q --spider -T 5 http://localhost:8222/jsz?js-ready=true || exit 1" ]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    build:
+      context: ./apps/backend/
+      dockerfile: Dockerfile.worker
+    privileged: true
+    # cgroup: host
+    environment:
+      - PROBLUM_CONFIG_FILE=/worker/config.yml
+    depends_on:
+      backend:
+        condition: service_started
+
+volumes:
+  postgres_volume:
+  redis_volume:
+  nats_volume:

@@ -153,6 +153,7 @@ func (s *Solver) solveGolang(test *testDTO.Test, md map[string]any) (*dto.Result
 			"--stdout", "stdout.txt",
 			"--stderr", "stderr.txt",
 			"--time", fmt.Sprintf("%d", 5),
+			"--wall-time", fmt.Sprintf("%d", 5),
 			"--mem", fmt.Sprintf("%d", 4096*1024),
 			"--processes=64",
 			"--run", "--", "./solve",
@@ -187,7 +188,20 @@ func (s *Solver) solveGolang(test *testDTO.Test, md map[string]any) (*dto.Result
 
 		result.Duration = max(result.Duration, getDuration(metadata))
 		if exitCode != 0 {
-			result.ErrorMessage = utils.Ptr(string(stderrData))
+			if status, ok := metadata["status"]; ok {
+				result.Status = status
+			} else {
+				result.Status = "RE"
+			}
+
+			if string(stderrData) != "" {
+				result.ErrorMessage = utils.Ptr(string(stderrData))
+			} else if message, ok := metadata["message"]; ok {
+				result.ErrorMessage = utils.Ptr(message)
+			} else {
+				result.ErrorMessage = utils.Ptr("Runtime error")
+			}
+
 			break
 		}
 		result.MemoryUsage = max(result.MemoryUsage, getMemoryUsage(metadata))

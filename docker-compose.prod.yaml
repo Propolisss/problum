@@ -1,8 +1,14 @@
 services:
+  frontend:
+    image: propolisss/problum-frontend:latest
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_started
+  
   backend:
-    build:
-      context: ./apps/backend/
-      dockerfile: Dockerfile.app
+    image: propolisss/problum-backend:latest
     ports:
       - "8080:8080"
     environment:
@@ -63,9 +69,7 @@ services:
       retries: 5
 
   worker:
-    build:
-      context: ./apps/backend/
-      dockerfile: Dockerfile.worker
+    image: propolisss/problum-worker:latest
     privileged: true
     # cgroup: host
     environment:
