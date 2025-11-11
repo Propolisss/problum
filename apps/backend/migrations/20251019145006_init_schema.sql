@@ -132,14 +132,30 @@ problem_insert AS (
     VALUES ((SELECT id FROM lesson_insert), 'Сумма двух чисел', 'Напишите функцию `sum`, которая принимает два целых числа `a` и `b` и возвращает их сумму.', 'easy', '1 second', 67108864)
     RETURNING id
 ),
-template_insert AS (
+template_insert_go AS (
     INSERT INTO templates (problem_id, language, code, metadata)
     VALUES ((SELECT id FROM problem_insert), 'go',
     '
-    // sum принимает два целых числа и должна вернуть их сумму.
-    func sum(a, b int) int {
-        // Вставьте ваш код здесь
-    }',
+// sum принимает два целых числа и должна вернуть их сумму.
+func sum(a, b int) int {
+    // Вставьте ваш код здесь
+}',
+    '{
+      "function_name": "sum",
+      "parameters": [
+        { "name": "a", "type": "int" },
+        { "name": "b", "type": "int" }
+      ]
+    }'::jsonb)
+),
+template_insert_python AS (
+    INSERT INTO templates (problem_id, language, code, metadata)
+    VALUES ((SELECT id FROM problem_insert), 'python',
+    '
+# sum принимает два числа и должна вернуть их сумму.
+def sum(a, b):
+    # Вставьте ваш код здесь
+',
     '{
       "function_name": "sum",
       "parameters": [

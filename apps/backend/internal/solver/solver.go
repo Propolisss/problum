@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -25,6 +26,11 @@ import (
 	"golang.org/x/tools/imports"
 )
 
+var (
+	errWrongAnswer    = errors.New("wrong answer")
+	errNotNilExitCode = errors.New("not nil exit code")
+)
+
 type TestService interface {
 	GetByProblemID(context.Context, int) (*testDTO.Test, error)
 }
@@ -36,6 +42,19 @@ type TemplateService interface {
 type Solver struct {
 	testSvc     TestService
 	templateSvc TemplateService
+}
+
+type runIsolateConfig struct {
+	StdinFile  string
+	StdoutFile string
+	StderrFile string
+	MetaFile   string
+	BoxFile    string
+	Time       string
+	WallTime   string
+	Mem        string
+	Processes  string
+	RunCommand []string
 }
 
 func New(testSvc TestService, templateSvc TemplateService) *Solver {
@@ -78,7 +97,29 @@ func (s *Solver) Solve(ctx context.Context, attempt *attemptDTO.Attempt) (*dto.R
 }
 
 func (s *Solver) solvePython(test *testDTO.Test, md map[string]any) (*dto.Result, error) {
-	return nil, nil
+	result := &dto.Result{}
+
+	if err := s.renderTemplate("code.py.j2", md); err != nil {
+		return nil, err
+	}
+
+	path, err := initIsolate()
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to init isolate")
+		return nil, fmt.Errorf("failed to init isolate: %w", err)
+	}
+
+	if err := runTests(path, "python", test.Tests, result); err != nil {
+		log.Error().Err(err).Msg("Failed to run tests")
+		return nil, fmt.Errorf("failed to run tests: %w", err)
+	}
+
+	if err := cleanupIsolate(); err != nil {
+		log.Error().Err(err).Msg("Failed to cleanup isolate")
+		return nil, fmt.Errorf("failed to cleanup isolate: %w", err)
+	}
+
+	return result, nil
 }
 
 func (s *Solver) solveGolang(test *testDTO.Test, md map[string]any) (*dto.Result, error) {
@@ -103,6 +144,26 @@ func (s *Solver) solveGolang(test *testDTO.Test, md map[string]any) (*dto.Result
 		return result, nil
 	}
 
+	path, err := initIsolate()
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to init isolate")
+		return nil, fmt.Errorf("failed to init isolate: %w", err)
+	}
+
+	if err := runTests(path, "go", test.Tests, result); err != nil {
+		log.Error().Err(err).Msg("Failed to run tests")
+		return nil, fmt.Errorf("failed to run tests: %w", err)
+	}
+
+	if err := cleanupIsolate(); err != nil {
+		log.Error().Err(err).Msg("Failed to cleanup isolate")
+		return nil, fmt.Errorf("failed to cleanup isolate: %w", err)
+	}
+
+	return result, nil
+}
+
+func initIsolate() (string, error) {
 	initCmd := exec.Command(
 		"isolate",
 		"--box-id", "0",
@@ -116,107 +177,13 @@ func (s *Solver) solveGolang(test *testDTO.Test, md map[string]any) (*dto.Result
 
 	if err := initCmd.Run(); err != nil {
 		log.Error().Str("stdout", initOutput.String()).Str("stderr", initStderr.String()).Err(err).Msg("Failed to init isolate")
-		return nil, err
+		return "", err
 	}
 
-	boxPath := strings.TrimSpace(initOutput.String())
-	sandBoxPath := filepath.Join(boxPath, "box")
-	stdinFile := filepath.Join(sandBoxPath, "stdin.txt")
-	stdoutFile := filepath.Join(sandBoxPath, "stdout.txt")
-	stderrFile := filepath.Join(sandBoxPath, "stderr.txt")
-	metaFile := filepath.Join(boxPath, "meta.txt")
+	return initOutput.String(), nil
+}
 
-	goFile, err := os.ReadFile("solve")
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to read go file")
-		return nil, err
-	}
-
-	goBoxFile := filepath.Join(sandBoxPath, "solve")
-	if err := os.WriteFile(goBoxFile, goFile, 0o755); err != nil {
-		log.Error().Err(err).Msg("Failed to write go file")
-		return nil, err
-	}
-
-	for _, t := range test.Tests {
-		if err := os.WriteFile(stdinFile, t.Input, 0o644); err != nil {
-			log.Error().Err(err).Msg("Failed to write stdin")
-			return nil, err
-		}
-
-		runCmd := exec.Command(
-			"isolate",
-			"--box-id", "0",
-			// "--cg",
-			"--meta", metaFile,
-			"--stdin", "stdin.txt",
-			"--stdout", "stdout.txt",
-			"--stderr", "stderr.txt",
-			"--time", fmt.Sprintf("%d", 5),
-			"--wall-time", fmt.Sprintf("%d", 5),
-			"--mem", fmt.Sprintf("%d", 4096*1024),
-			"--processes=64",
-			"--run", "--", "./solve",
-		)
-		var runStdout bytes.Buffer
-		var runStderr bytes.Buffer
-		runCmd.Stdout = &runStdout
-		runCmd.Stderr = &runStderr
-
-		if err := runCmd.Run(); err != nil {
-			log.Error().Err(err).Str("stdout", runStdout.String()).Str("stderr", runStderr.String()).Msg("Failed to run isolate")
-			// return err
-		}
-
-		stdoutData, _ := os.ReadFile(stdoutFile)
-		stderrData, _ := os.ReadFile(stderrFile)
-		metaData, _ := os.ReadFile(metaFile)
-
-		metadata := parseMetadata(metaData)
-
-		exitCode := 1
-		if exitCodeStr, ok := metadata["exitcode"]; ok {
-			if code, err := strconv.Atoi(exitCodeStr); err == nil {
-				exitCode = code
-			}
-		}
-
-		log.Info().Str("stdout", string(stdoutData)).Msg("stdout")
-		log.Info().Str("stderr", string(stderrData)).Msg("stderr")
-		log.Info().Int("exit_code", exitCode).Msg("exit_code")
-		log.Info().Interface("metadata", metadata).Msg("metadata")
-
-		result.Duration = max(result.Duration, getDuration(metadata))
-		if exitCode != 0 {
-			if status, ok := metadata["status"]; ok {
-				result.Status = status
-			} else {
-				result.Status = "RE"
-			}
-
-			if string(stderrData) != "" {
-				result.ErrorMessage = utils.Ptr(string(stderrData))
-			} else if message, ok := metadata["message"]; ok {
-				result.ErrorMessage = utils.Ptr(message)
-			} else {
-				result.ErrorMessage = utils.Ptr("Runtime error")
-			}
-
-			break
-		}
-		result.MemoryUsage = max(result.MemoryUsage, getMemoryUsage(metadata))
-
-		if string(stdoutData) != string(t.Output) {
-			result.Status = "WA"
-			result.ErrorMessage = utils.Ptr("Wrong answer")
-			break
-		}
-	}
-
-	if result.ErrorMessage == nil {
-		result.Status = "AC"
-	}
-
+func cleanupIsolate() error {
 	cleanupCmd := exec.Command(
 		"isolate",
 		"--box-id", "0",
@@ -224,11 +191,165 @@ func (s *Solver) solveGolang(test *testDTO.Test, md map[string]any) (*dto.Result
 		"--cleanup",
 	)
 	if err := cleanupCmd.Run(); err != nil {
-		log.Error().Err(err).Msg("Failed to run isolate")
-		return nil, err
+		log.Error().Err(err).Msg("Failed to cleanup isolate")
+		return fmt.Errorf("failed to cleanup isolate: %w", err)
 	}
 
-	return result, nil
+	return nil
+}
+
+func getIsolateConfig(path, language string) (*runIsolateConfig, error) {
+	cfg := &runIsolateConfig{}
+
+	boxPath := strings.TrimSpace(path)
+	sandBoxPath := filepath.Join(boxPath, "box")
+
+	cfg.StdinFile = filepath.Join(sandBoxPath, "stdin.txt")
+	cfg.StdoutFile = filepath.Join(sandBoxPath, "stdout.txt")
+	cfg.StderrFile = filepath.Join(sandBoxPath, "stderr.txt")
+	cfg.MetaFile = filepath.Join(boxPath, "meta.txt")
+
+	switch language {
+	case "go":
+		goFile, err := os.ReadFile("solve")
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to read go file")
+			return nil, err
+		}
+
+		goBoxFile := filepath.Join(sandBoxPath, "solve")
+		if err := os.WriteFile(goBoxFile, goFile, 0o755); err != nil {
+			log.Error().Err(err).Msg("Failed to write go file")
+			return nil, err
+		}
+
+		cfg.BoxFile = goBoxFile
+		cfg.Time = fmt.Sprintf("%d", 5)
+		cfg.WallTime = fmt.Sprintf("%d", 5)
+		cfg.Mem = fmt.Sprintf("%d", 4096*1024)
+		cfg.Processes = fmt.Sprintf("--processes=%d", 64)
+		cfg.RunCommand = []string{"--run", "--", "./solve"}
+	case "python":
+		pythonFile, err := os.ReadFile("code.py")
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to read python file")
+			return nil, err
+		}
+
+		pythonBoxFile := filepath.Join(sandBoxPath, "code.py")
+		if err := os.WriteFile(pythonBoxFile, pythonFile, 0o755); err != nil {
+			log.Error().Err(err).Msg("Failed to write python file")
+			return nil, err
+		}
+
+		cfg.BoxFile = pythonBoxFile
+		cfg.Time = fmt.Sprintf("%d", 5)
+		cfg.WallTime = fmt.Sprintf("%d", 5)
+		cfg.Mem = fmt.Sprintf("%d", 4096*1024)
+		cfg.RunCommand = []string{"--run", "--", "/usr/bin/python3", "./code.py"}
+	default:
+		return nil, fmt.Errorf("unsupported language")
+	}
+
+	return cfg, nil
+}
+
+func runIsolate(cfg *runIsolateConfig, test *testDTO.TestCase, result *dto.Result) error {
+	if err := os.WriteFile(cfg.StdinFile, test.Input, 0o644); err != nil {
+		log.Error().Err(err).Msg("Failed to write stdin")
+		return err
+	}
+
+	args := []string{
+		"--box-id", "0",
+		// "--cg",
+		"--meta", cfg.MetaFile,
+		"--stdin", "stdin.txt",
+		"--stdout", "stdout.txt",
+		"--stderr", "stderr.txt",
+		"--time", cfg.Time,
+		"--wall-time", cfg.WallTime,
+		"--mem", cfg.Mem,
+	}
+	if cfg.Processes != "" {
+		args = append(args, cfg.Processes)
+	}
+	args = append(args, cfg.RunCommand...)
+	runCmd := exec.Command("isolate", args...)
+
+	var runStdout bytes.Buffer
+	var runStderr bytes.Buffer
+	runCmd.Stdout = &runStdout
+	runCmd.Stderr = &runStderr
+
+	if err := runCmd.Run(); err != nil {
+		log.Error().Err(err).Str("stdout", runStdout.String()).Str("stderr", runStderr.String()).Msg("Failed to run isolate")
+		// return err
+	}
+
+	stdoutData, _ := os.ReadFile(cfg.StdoutFile)
+	stderrData, _ := os.ReadFile(cfg.StderrFile)
+	metaData, _ := os.ReadFile(cfg.MetaFile)
+
+	metadata := parseMetadata(metaData)
+
+	exitCode := 1
+	if exitCodeStr, ok := metadata["exitcode"]; ok {
+		if code, err := strconv.Atoi(exitCodeStr); err == nil {
+			exitCode = code
+		}
+	}
+
+	log.Info().Str("stdout", string(stdoutData)).Msg("stdout")
+	log.Info().Str("stderr", string(stderrData)).Msg("stderr")
+	log.Info().Int("exit_code", exitCode).Msg("exit_code")
+	log.Info().Interface("metadata", metadata).Msg("metadata")
+
+	result.Duration = max(result.Duration, getDuration(metadata))
+	if exitCode != 0 {
+		if status, ok := metadata["status"]; ok {
+			result.Status = status
+		} else {
+			result.Status = "RE"
+		}
+
+		if string(stderrData) != "" {
+			result.ErrorMessage = utils.Ptr(string(stderrData))
+		} else if message, ok := metadata["message"]; ok {
+			result.ErrorMessage = utils.Ptr(message)
+		} else {
+			result.ErrorMessage = utils.Ptr("Runtime error")
+		}
+
+		return errNotNilExitCode
+	}
+	result.MemoryUsage = max(result.MemoryUsage, getMemoryUsage(metadata))
+
+	if string(stdoutData) != string(test.Output) {
+		result.Status = "WA"
+		result.ErrorMessage = utils.Ptr("Wrong answer")
+		return errWrongAnswer
+	}
+
+	return nil
+}
+
+func runTests(path, language string, tests []testDTO.TestCase, result *dto.Result) error {
+	cfg, err := getIsolateConfig(path, language)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get isolate config")
+		return fmt.Errorf("failed to get isolate config: %w", err)
+	}
+	result.Status = "AC"
+
+	for _, t := range tests {
+		if err := runIsolate(cfg, &t, result); err != nil {
+			log.Error().Err(err).Msg("Failed to run test")
+			break
+		}
+	}
+
+	return nil
 }
 
 func (s *Solver) renderTemplate(filename string, context map[string]any) error {

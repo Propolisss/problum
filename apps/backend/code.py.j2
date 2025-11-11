@@ -1,0 +1,30 @@
+import sys
+import os
+import re
+import json
+import math
+import cmath
+import decimal
+import fractions
+import collections
+import heapq
+import bisect
+import functools
+import itertools
+import string
+import datetime
+import copy
+from typing import List, Optional, Deque, Set, Dict, Tuple, Counter
+
+{{ code | safe }}
+
+if __name__ == "__main__":
+    input_data = sys.stdin.read()
+
+    test_case = json.loads(input_data)
+
+    result = {{ function_name }}(**test_case)
+
+    json_result = json.dumps(result)
+
+    sys.stdout.write(json_result)
