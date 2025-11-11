@@ -3,7 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAttemptById } from '../api/attempts';
 import { Card } from '../components/ui';
-import { CheckCircle2, XCircle, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
+import { formatMemory } from '../utils/formatters';
 
 export default function AttemptDetail() {
     const { id } = useParams();
@@ -51,7 +52,7 @@ export default function AttemptDetail() {
                     </div>
                     <div>
                         <div className="text-xs text-gray-500">Использовано памяти</div>
-                        <div className="text-sm font-medium">{(data.memory_usage / 1024).toFixed(2)} KB</div>
+                        <div className="text-sm font-medium">{formatMemory(data.memory_usage)}</div>
                     </div>
                 </div>
 

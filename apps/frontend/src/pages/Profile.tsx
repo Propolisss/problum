@@ -4,7 +4,8 @@ import { fetchAttemptsForUser } from '../api/attempts';
 import { Card, Button } from '../components/ui';
 import { useAuth } from '../features/auth/hooks';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, XCircle, History } from 'lucide-react';
+import { CheckCircle2, XCircle, History, Clock, MemoryStick } from 'lucide-react';
+import { formatMemory } from '../utils/formatters';
 
 const AttemptStatus = ({ status }: { status: string }) => {
     if (status === 'AC') {
@@ -21,7 +22,7 @@ export default function Profile() {
     });
 
     const successfulAttempts = attempts?.filter(a => a.status === 'AC').length ?? 0;
-    const recentAttempts = attempts?.slice(0, 5) ?? [];
+    const recentAttempts = attempts?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5) ?? [];
 
     if (isLoading) return <div>Загружаем профиль...</div>;
     if (isError) return <div>Ошибка загрузки</div>;
@@ -74,7 +75,17 @@ export default function Profile() {
                                         <div className="font-medium">Задача #{a.problem_id}</div>
                                         <div className="text-xs text-gray-500 mt-1">{new Date(a.created_at ?? Date.now()).toLocaleString()}</div>
                                     </div>
-                                    <AttemptStatus status={a.status} />
+                                    <div className="flex items-center gap-4">
+                                        <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-600" title="Время выполнения">
+                                            <Clock className="w-4 h-4" />
+                                            <span>{(a.duration / 1_000_000).toFixed(2)} ms</span>
+                                        </div>
+                                        <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-600" title="Потребление памяти">
+                                            <MemoryStick className="w-4 h-4" />
+                                            <span>{formatMemory(a.memory_usage)}</span>
+                                        </div>
+                                        <AttemptStatus status={a.status} />
+                                    </div>
                                 </div>
                             </Link>
                         ))}

@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchAttemptsForUser } from '../api/attempts';
 import { Link } from 'react-router-dom';
 import { Card } from '../components/ui';
-import { CheckCircle2, XCircle, History } from 'lucide-react';
+import { CheckCircle2, XCircle, History, MemoryStick, Clock } from 'lucide-react';
+import { formatMemory } from '../utils/formatters';
 
 const AttemptStatus = ({ status }: { status: string }) => {
     if (status === 'AC') {
@@ -38,7 +39,14 @@ export default function Attempts() {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-6">
-                                        <span className="text-sm">{(a.duration / 1_000_000).toFixed(2)} ms</span>
+                                        <div className="flex items-center gap-1.5 text-sm text-gray-600" title="Время выполнения">
+                                            <Clock className="w-4 h-4" />
+                                            <span>{(a.duration / 1_000_000).toFixed(2)} ms</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 text-sm text-gray-600" title="Потребление памяти">
+                                            <MemoryStick className="w-4 h-4" />
+                                            <span>{formatMemory(a.memory_usage)}</span>
+                                        </div>
                                         <AttemptStatus status={a.status} />
                                     </div>
                                 </div>

@@ -1,7 +1,8 @@
 import React from 'react'
 import type { APIAttempt } from '../api/attempts'
 import { Card } from './ui'
-import { CheckCircle2, XCircle, AlertTriangle, Loader2, Clock, MemoryStick, BrainCircuit } from 'lucide-react'
+import { CheckCircle2, XCircle, AlertTriangle, Loader2, Clock, MemoryStick } from 'lucide-react'
+import { formatMemory } from '../utils/formatters'
 
 type Props = {
     result: APIAttempt | null
@@ -63,7 +64,7 @@ export default function SubmissionResult({ result, isPending }: Props) {
                 <>
                     <div className="grid grid-cols-2 gap-4 mt-4 border-b pb-4 mb-4">
                         <Stat label="Время" value={`${(result.duration / 1_000_000).toFixed(2)} ms`} icon={<Clock className="w-4 h-4 text-gray-500" />} />
-                        <Stat label="Память" value={`${(result.memory_usage / 1024).toFixed(2)} KB`} icon={<MemoryStick className="w-4 h-4 text-gray-500" />} />
+                        <Stat label="Память" value={formatMemory(result.memory_usage)} icon={<MemoryStick className="w-4 h-4 text-gray-500" />} />
                     </div>
                     {result.error_message && (
                         <div>
