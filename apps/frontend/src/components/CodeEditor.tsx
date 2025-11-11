@@ -1,7 +1,8 @@
 import React from 'react';
 import Editor from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
-import * as ruff from '@astral-sh/ruff-wasm-web';
+
+import ruffInit, { Workspace, PositionEncoding } from '@astral-sh/ruff-wasm-web';
 import initGoFmt, { format as formatGo } from '@wasm-fmt/gofmt/vite';
 
 type Props = {
@@ -14,12 +15,24 @@ type Props = {
 
 let isGoFmtInitialized = false;
 
+let ruffWorkspace: Workspace | null = null;
+
 export default function CodeEditor({ value, language = 'go', onChange, onMount, height = '400px' }: Props) {
     const handleEditorMount = (editorInstance: editor.IStandaloneCodeEditor, monacoInstance: any) => {
         if (!isGoFmtInitialized) {
             initGoFmt().then(() => {
                 isGoFmtInitialized = true;
             }).catch(console.error);
+        }
+
+        if (!ruffWorkspace) {
+            ruffInit()
+                .then(() => {
+                    const settings = Workspace.defaultSettings();
+                    ruffWorkspace = new Workspace(settings, PositionEncoding.Utf16);
+                    console.log('Ruff Workspace initialized successfully.');
+                })
+                .catch(console.error);
         }
 
         monacoInstance.languages.registerDocumentFormattingEditProvider('go', {
@@ -38,10 +51,14 @@ export default function CodeEditor({ value, language = 'go', onChange, onMount, 
 
         monacoInstance.languages.registerDocumentFormattingEditProvider('python', {
             async provideDocumentFormattingEdits(model: editor.ITextModel) {
+                if (!ruffWorkspace) {
+                    console.warn('Ruff formatter is not ready yet.');
+                    return [];
+                }
                 const text = model.getValue();
                 try {
-                    await ruff.default();
-                    const formatted = ruff.format(text);
+                    const formatted = ruffWorkspace.format(text);
+
                     return [{ range: model.getFullModelRange(), text: formatted }];
                 } catch (e) {
                     console.error('Python formatting error:', e);
