@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import api from '../api/client'
 import { useAuth } from '../features/auth/hooks'
+import { Button, Input } from '../components/ui'
 
 export default function Register() {
     const { login: doLogin } = useAuth()
@@ -46,49 +46,48 @@ export default function Register() {
                 <form onSubmit={submit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium mb-1">Login</label>
-                        <input
+                        <Input
                             value={loginVal}
                             onChange={(e) => setLoginVal(e.target.value)}
-                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
                             placeholder="логин"
                         />
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium mb-1">Password</label>
-                        <input
+                        <Input
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             type="password"
-                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
                             placeholder="пароль"
                         />
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium mb-1">Repeat Password</label>
-                        <input
+                        <Input
                             value={repeated}
                             onChange={(e) => setRepeated(e.target.value)}
                             type="password"
-                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
                             placeholder="еще раз пароль"
                         />
                     </div>
 
                     {error && <div className="text-red-600 text-sm">{error}</div>}
 
-                    <div className="flex items-center justify-between">
-                        <button
+                    <div className="pt-2 space-y-3">
+                        <Button
                             type="submit"
                             disabled={loading}
-                            className="px-4 py-2 rounded-lg bg-brand text-white font-medium disabled:opacity-60"
+                            className="w-full"
                         >
-                            {loading ? 'Зарегистрироваться...' : 'Зарегистрироваться'}
-                        </button>
-                        <a href="/login" className="text-sm text-gray-600 hover:underline">
-                            Уже есть аккаунт?
-                        </a>
+                            {loading ? 'Регистрация...' : 'Зарегистрироваться'}
+                        </Button>
+                        <div className="text-center">
+                            <Link to="/login" className="text-sm text-gray-600 hover:underline">
+                                Уже есть аккаунт?
+                            </Link>
+                        </div>
                     </div>
                 </form>
             </div>
