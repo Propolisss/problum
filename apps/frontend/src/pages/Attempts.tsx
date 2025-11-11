@@ -6,7 +6,7 @@ import { Card } from '../components/ui';
 import { CheckCircle2, XCircle, History } from 'lucide-react';
 
 const AttemptStatus = ({ status }: { status: string }) => {
-    if (status === 'ok') {
+    if (status === 'AC') {
         return <span className="flex items-center gap-1.5 text-sm font-medium text-green-600"><CheckCircle2 className="w-4 h-4" /> Успешно</span>;
     }
     return <span className="flex items-center gap-1.5 text-sm font-medium text-red-600"><XCircle className="w-4 h-4" /> Ошибка</span>;
@@ -32,13 +32,13 @@ export default function Attempts() {
                             <Link to={`/attempts/${a.id}`} key={a.id}>
                                 <div className="p-4 bg-secondary rounded-lg flex items-center justify-between hover:bg-secondary/80 transition-colors">
                                     <div>
-                                        <div className="font-semibold">Задача #{a.problemId}</div>
+                                        <div className="font-semibold">Задача #{a.problem_id}</div>
                                         <div className="text-sm text-gray-500 mt-1">
                                             {new Date(a.created_at ?? Date.now()).toLocaleString()}
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-6">
-                                        <span className="text-sm">{a.duration_ms} ms</span>
+                                        <span className="text-sm">{(a.duration / 1_000_000).toFixed(2)} ms</span>
                                         <AttemptStatus status={a.status} />
                                     </div>
                                 </div>
