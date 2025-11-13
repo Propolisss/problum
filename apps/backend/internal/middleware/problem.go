@@ -4,13 +4,14 @@ import (
 	"context"
 	"strconv"
 
+	problemSvc "problum/internal/problem/service"
 	problemDTO "problum/internal/problem/service/dto"
 
 	"github.com/gofiber/fiber/v3"
 )
 
 type ProblemService interface {
-	Get(context.Context, int) (*problemDTO.Problem, error)
+	GetWithOptions(context.Context, int, ...problemSvc.Option) (*problemDTO.Problem, error)
 }
 
 func Problem(problemSvc ProblemService, lessonSvc LessonService) fiber.Handler {
@@ -26,7 +27,7 @@ func Problem(problemSvc ProblemService, lessonSvc LessonService) fiber.Handler {
 		}
 		courseID, _ := courseIDString.(int)
 
-		problem, err := problemSvc.Get(c.Context(), problemID)
+		problem, err := problemSvc.GetWithOptions(c.Context(), problemID)
 		if err != nil {
 			return c.SendStatus(fiber.StatusForbidden)
 		}

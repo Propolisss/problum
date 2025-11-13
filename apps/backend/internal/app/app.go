@@ -23,6 +23,7 @@ import (
 	authHandler "problum/internal/auth/delivery/http"
 	authService "problum/internal/auth/service"
 
+	userHandler "problum/internal/user/delivery/http"
 	userRepository "problum/internal/user/repository"
 	userService "problum/internal/user/service"
 
@@ -72,7 +73,7 @@ type LessonService interface {
 	Get(ctx context.Context, id int) (*lessonDTO.Lesson, error)
 }
 type ProblemService interface {
-	Get(context.Context, int) (*problemDTO.Problem, error)
+	GetWithOptions(context.Context, int, ...problemService.Option) (*problemDTO.Problem, error)
 	Submit(context.Context, *problemDTO.ProblemSubmit) (int, error)
 }
 
@@ -121,6 +122,7 @@ func New() (*App, error) {
 
 	userRepo := userRepository.New(db)
 	userSvc := userService.New(userRepo)
+	userHdl := userHandler.New(cfg, userSvc)
 
 	authSvc := authService.New(rdb, userSvc, sessionSvc)
 	authHdl := authHandler.New(cfg, authSvc)
@@ -179,6 +181,7 @@ func New() (*App, error) {
 		problemSvc,
 		attemptHdl,
 		attemptSvc,
+		userHdl,
 	)
 
 	return app, nil
@@ -196,6 +199,7 @@ func setupRoutes(
 	problemSvc ProblemService,
 	attemptHdl *attemptHandler.Handler,
 	attemptSvc AttemptSvc,
+	userHdl *userHandler.Handler,
 ) {
 	// healthchecks
 	app.httpServer.Get(healthcheck.LivenessEndpoint, healthcheck.New())
@@ -215,6 +219,11 @@ func setupRoutes(
 	auth.Post("/refresh", authHdl.Refresh)
 	auth.Post("/logout", middleware.Auth(app.rdb), authHdl.Logout)
 	auth.Post("/register", authHdl.Register)
+
+	// profile
+	profile := app.httpServer.Group("/profile")
+	profile.Use(middleware.Auth(app.rdb))
+	profile.Get("/", userHdl.Get)
 
 	// course
 	course := app.httpServer.Group("/courses")

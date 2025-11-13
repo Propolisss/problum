@@ -11,18 +11,28 @@ type Props = {
     onChange?: (value: string) => void;
     height?: string;
     onMount?: (editor: editor.IStandaloneCodeEditor, monaco: any) => void;
+    readOnly?: boolean;
 };
 
 let isGoFmtInitialized = false;
 
 let ruffWorkspace: Workspace | null = null;
 
-export default function CodeEditor({ value, language = 'go', onChange, onMount, height = '400px' }: Props) {
+export default function CodeEditor({
+    value,
+    language = 'go',
+    onChange,
+    onMount,
+    height = '400px',
+    readOnly = false,
+}: Props) {
     const handleEditorMount = (editorInstance: editor.IStandaloneCodeEditor, monacoInstance: any) => {
         if (!isGoFmtInitialized) {
-            initGoFmt().then(() => {
-                isGoFmtInitialized = true;
-            }).catch(console.error);
+            initGoFmt()
+                .then(() => {
+                    isGoFmtInitialized = true;
+                })
+                .catch(console.error);
         }
 
         if (!ruffWorkspace) {
@@ -67,6 +77,54 @@ export default function CodeEditor({ value, language = 'go', onChange, onMount, 
             },
         });
 
+        if (readOnly) {
+            editorInstance.updateOptions({
+                readOnly: true,
+                domReadOnly: true,
+                renderLineHighlight: 'none',
+                scrollBeyondLastLine: false,
+            });
+
+            const dom = editorInstance.getDomNode();
+            if (dom) {
+                dom.setAttribute('tabindex', '-1');
+            }
+
+            const mouseDownDisposable = editorInstance.onMouseDown((e) => {
+                e.event.preventDefault();
+                e.event.stopPropagation();
+            });
+
+            const keyDownDisposable = editorInstance.onKeyDown((k) => {
+                k.preventDefault();
+            });
+
+            const styleEl = document.createElement('style');
+            styleEl.className = 'monaco-readonly-style';
+            styleEl.textContent = `
+        .monaco-editor .cursor { visibility: hidden !important; }
+        .monaco-editor .view-lines { cursor: default !important; }
+        .monaco-editor .selectionHighlight { display: none !important; }
+      `;
+            document.head.appendChild(styleEl);
+
+            editorInstance.onDidDispose(() => {
+                try {
+                    mouseDownDisposable.dispose();
+                } catch { }
+                try {
+                    keyDownDisposable.dispose();
+                } catch { }
+                try {
+                    styleEl.remove();
+                } catch { }
+            });
+        } else {
+            editorInstance.updateOptions({
+                readOnly: false,
+            });
+        }
+
         if (onMount) {
             onMount(editorInstance, monacoInstance);
         }
@@ -81,7 +139,15 @@ export default function CodeEditor({ value, language = 'go', onChange, onMount, 
                 value={value}
                 onChange={(v) => onChange?.(v ?? '')}
                 onMount={handleEditorMount}
-                options={{ minimap: { enabled: false }, fontSize: 14 }}
+                options={{
+                    minimap: { enabled: false },
+                    fontSize: 14,
+                    readOnly: readOnly,
+                    domReadOnly: true,
+                    renderControlCharacters: false,
+                    lineNumbers: 'on',
+                    scrollBeyondLastLine: false,
+                }}
             />
         </div>
     );

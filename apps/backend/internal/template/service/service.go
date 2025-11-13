@@ -12,6 +12,7 @@ import (
 
 type Repository interface {
 	GetByProblemIDAndLanguage(context.Context, int, string) (*model.Template, error)
+	GetLanguagesByProblemID(context.Context, int) ([]string, error)
 }
 
 type Service struct {
@@ -36,4 +37,14 @@ func (s *Service) GetByProblemIDAndLanguage(
 	}
 
 	return dto.ToDTO(template), nil
+}
+
+func (s *Service) GetLanguagesByProblemID(ctx context.Context, problemID int) ([]string, error) {
+	languages, err := s.repo.GetLanguagesByProblemID(ctx, problemID)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get languages")
+		return nil, fmt.Errorf("failed to get languages: %w", err)
+	}
+
+	return languages, nil
 }

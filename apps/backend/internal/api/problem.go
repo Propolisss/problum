@@ -17,6 +17,7 @@ type ProblemGetResponse struct {
 	CreatedAt   time.Time           `json:"created_at"`
 	UpdatedAt   time.Time           `json:"updated_at"`
 	Template    TemplateGetResponse `json:"template,omitempty"`
+	Languages   []string            `json:"languages,omitempty"`
 }
 
 type ProblemSubmitRequest struct {

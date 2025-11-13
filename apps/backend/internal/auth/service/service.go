@@ -13,6 +13,7 @@ import (
 
 	sessionRepo "problum/internal/session/repository"
 	userRepo "problum/internal/user/repository"
+	userDTO "problum/internal/user/service/dto"
 
 	"github.com/bytedance/sonic"
 	"github.com/rs/zerolog/log"
@@ -22,8 +23,8 @@ import (
 var HMACRefreshTokenKey = []byte("refresh_token_key")
 
 type UserService interface {
-	FindByLogin(context.Context, string) (*model.User, error)
-	Create(context.Context, *model.User) (*model.User, error)
+	FindByLogin(context.Context, string) (*userDTO.User, error)
+	Create(context.Context, *userDTO.User) (*userDTO.User, error)
 }
 
 type SessionService interface {
@@ -70,7 +71,7 @@ func (s *Service) Register(ctx context.Context, login, password, repeatedPasswor
 		HashedPassword: string(hashedPass),
 	}
 
-	if _, err := s.userSvc.Create(ctx, user); err != nil {
+	if _, err := s.userSvc.Create(ctx, userDTO.ToDTO(user)); err != nil {
 		log.Error().Err(err).Msg("failed to create user")
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}

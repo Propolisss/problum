@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useProblem, useProblemAttempts } from '../features/courses/hooks';
+import { useProblem, useProblemAttempts, useCourse } from '../features/courses/hooks';
 import { submitAttempt, fetchAttemptById, type APIAttempt } from '../api/attempts';
 import { loadDraft, saveDraft } from '../utils/storage';
 import CodeEditor from '../components/CodeEditor';
@@ -31,7 +31,27 @@ export default function Problem() {
     const numericCourseId = Number(courseId);
     const numericProblemId = Number(problemId);
 
-    const [language, setLanguage] = useState('go');
+    const { data: course } = useCourse(numericCourseId);
+
+    const problemMetadata = useMemo(() => {
+        if (!course) return null;
+        for (const lesson of course.lessons) {
+            const p = lesson.problems?.find(p => p.id === numericProblemId);
+            if (p) return p;
+        }
+        return null;
+    }, [course, numericProblemId]);
+
+    const availableLanguages = problemMetadata?.languages || [];
+
+    const [language, setLanguage] = useState<string>('');
+
+    useEffect(() => {
+        if (availableLanguages.length > 0 && !language) {
+            setLanguage(availableLanguages[0]);
+        }
+    }, [availableLanguages, language]);
+
     const { data: problem, isLoading: isLoadingProblem, isRefetching, isError } = useProblem(numericCourseId, numericProblemId, language);
     const { data: pastAttempts } = useProblemAttempts(numericCourseId, numericProblemId);
 
@@ -107,8 +127,7 @@ export default function Problem() {
         submissionMutation.mutate({ language, code });
     };
 
-    if (isLoadingProblem) return <Card>Загружаем задачу...</Card>;
-
+    if (isLoadingProblem || !problemMetadata) return <Card>Загружаем задачу...</Card>;
     if (isError) {
         return (
             <Card className="text-center p-8">
@@ -159,9 +178,15 @@ export default function Problem() {
             <div className="xl:col-span-3 space-y-4 sticky top-24">
                 <Card className="flex flex-col h-[70vh]">
                     <div className="flex items-center justify-between pb-4 border-b mb-4">
-                        <Select value={language} onChange={(e) => setLanguage(e.target.value)}>
-                            {supportedLanguages.map(lang => (
-                                <option key={lang.value} value={lang.value}>{lang.label}</option>
+                        <Select
+                            value={language}
+                            onChange={(e) => setLanguage(e.target.value)}
+                            disabled={availableLanguages.length <= 1}
+                        >
+                            {availableLanguages.map(lang => (
+                                <option key={lang} value={lang}>
+                                    {supportedLanguages.find(l => l.value === lang)?.label || lang}
+                                </option>
                             ))}
                         </Select>
                         <Button variant="ghost" onClick={handleFormatClick} className="flex items-center gap-2">

@@ -19,6 +19,7 @@ export type Problem = {
   created_at: string;
   updated_at: string;
   template?: Template;
+  languages?: string[];
 };
 
 export type Lesson = {
@@ -43,4 +44,10 @@ export type Course = {
   updated_at: string;
   enrolled: boolean;
   lessons: Lesson[];
+};
+
+export type UserProfile = {
+  id: number;
+  login: string;
+  created_at: string;
 };

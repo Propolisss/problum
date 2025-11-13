@@ -3,8 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAttemptById } from '../api/attempts';
 import { Card } from '../components/ui';
-import { CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
+import { CheckCircle2, XCircle, ArrowLeft, Clock, MemoryStick, Code } from 'lucide-react';
 import { formatMemory } from '../utils/formatters';
+import CodeEditor from '../components/CodeEditor';
 
 export default function AttemptDetail() {
     const { id } = useParams();
@@ -19,11 +20,21 @@ export default function AttemptDetail() {
     if (!data) return <div>Попытка не найдена</div>;
 
     const isSuccess = data.status === 'AC';
-    const StatusIcon = isSuccess ? CheckCircle2 : (data.status === 'pending' ? ArrowLeft : XCircle);
+    const StatusIcon = isSuccess ? CheckCircle2 : (data.status === 'pending' ? Clock : XCircle);
     const statusColor = isSuccess ? 'text-green-600' : 'text-red-600';
+    const statusText = {
+        AC: "Решение принято",
+        WA: "Неверный ответ",
+        CE: "Ошибка компиляции",
+        RE: "Ошибка выполнения",
+        TLE: "Превышен лимит времени",
+        MLE: "Превышен лимит памяти",
+        pending: "В очереди"
+    }[data.status] || "Ошибка";
+
 
     return (
-        <div className="max-w-3xl mx-auto space-y-4">
+        <div className="max-w-4xl mx-auto space-y-6">
             <Link to="/attempts" className="inline-flex items-center gap-2 text-sm text-primary font-medium hover:underline">
                 <ArrowLeft className="w-4 h-4" />
                 Назад к истории
@@ -37,7 +48,7 @@ export default function AttemptDetail() {
                         <div className="font-semibold text-lg">Задача #{data.problem_id}</div>
                         <div className={`flex items-center gap-2 font-bold ${statusColor}`}>
                             <StatusIcon className="w-5 h-5" />
-                            <span>{data.status}</span>
+                            <span>{statusText} ({data.status})</span>
                         </div>
                     </div>
                     <div className="text-sm text-gray-500 mt-2">
@@ -46,13 +57,19 @@ export default function AttemptDetail() {
                 </div>
 
                 <div className="p-4 grid grid-cols-2 gap-4">
-                    <div>
-                        <div className="text-xs text-gray-500">Время выполнения</div>
-                        <div className="text-sm font-medium">{(data.duration / 1_000_000).toFixed(2)} ms</div>
+                    <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-gray-500" />
+                        <div>
+                            <div className="text-xs text-gray-500">Время</div>
+                            <div className="text-sm font-medium">{(data.duration / 1_000_000).toFixed(2)} ms</div>
+                        </div>
                     </div>
-                    <div>
-                        <div className="text-xs text-gray-500">Использовано памяти</div>
-                        <div className="text-sm font-medium">{formatMemory(data.memory_usage)}</div>
+                    <div className="flex items-center gap-2">
+                        <MemoryStick className="w-4 h-4 text-gray-500" />
+                        <div>
+                            <div className="text-xs text-gray-500">Память</div>
+                            <div className="text-sm font-medium">{formatMemory(data.memory_usage)}</div>
+                        </div>
                     </div>
                 </div>
 
@@ -64,6 +81,21 @@ export default function AttemptDetail() {
                         </pre>
                     </div>
                 )}
+            </Card>
+
+            <Card>
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                    <Code className="w-5 h-5" />
+                    Отправленный код
+                </h3>
+                <div className="h-[400px]">
+                    <CodeEditor
+                        language={data.language}
+                        value={data.code}
+                        readOnly={true}
+                        height="100%"
+                    />
+                </div>
             </Card>
         </div>
     );

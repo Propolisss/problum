@@ -7,6 +7,7 @@ import (
 
 	"problum/internal/api"
 	"problum/internal/config"
+	"problum/internal/problem/service"
 	"problum/internal/problem/service/dto"
 
 	"github.com/gofiber/fiber/v3"
@@ -14,7 +15,7 @@ import (
 )
 
 type Service interface {
-	GetWithTemplate(context.Context, int, string) (*dto.Problem, error)
+	GetWithOptions(context.Context, int, ...service.Option) (*dto.Problem, error)
 	Submit(context.Context, *dto.ProblemSubmit) (int, error)
 }
 
@@ -39,7 +40,12 @@ func (h *Handler) Get(c fiber.Ctx) error {
 
 	language := c.Query("language")
 
-	problem, err := h.svc.GetWithTemplate(c.Context(), id, language)
+	problem, err := h.svc.GetWithOptions(
+		c.Context(),
+		id,
+		service.WithTemplate(),
+		service.WithLanguage(language),
+	)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get problem")
 		return fmt.Errorf("failed to get problem")

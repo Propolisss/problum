@@ -25,6 +25,7 @@ type AttemptService interface {
 
 type TemplateService interface {
 	GetByProblemIDAndLanguage(context.Context, int, string) (*templateDTO.Template, error)
+	GetLanguagesByProblemID(context.Context, int) ([]string, error)
 }
 
 type Service struct {
@@ -32,6 +33,34 @@ type Service struct {
 	js          jetstream.JetStream
 	attemptSvc  AttemptService
 	templateSvc TemplateService
+}
+
+type options struct {
+	language      string
+	withLanguage  bool
+	withTemplate  bool
+	withLanguages bool
+}
+
+type Option func(*options)
+
+func WithTemplate() Option {
+	return func(opts *options) {
+		opts.withTemplate = true
+	}
+}
+
+func WithLanguage(language string) Option {
+	return func(opts *options) {
+		opts.language = language
+		opts.withLanguage = true
+	}
+}
+
+func WithLanguages() Option {
+	return func(opts *options) {
+		opts.withLanguages = true
+	}
 }
 
 func New(repo Repository, js jetstream.JetStream, attemptSvc AttemptService, templateSvc TemplateService) *Service {
@@ -50,23 +79,49 @@ func (s *Service) Get(ctx context.Context, id int) (*dto.Problem, error) {
 		return nil, fmt.Errorf("failed to get problem by id: %w", err)
 	}
 
-	return dto.ToDTO(problem, nil), nil
+	return dto.ToDTO(problem, nil, nil), nil
 }
 
-func (s *Service) GetWithTemplate(ctx context.Context, id int, language string) (*dto.Problem, error) {
+func (s *Service) GetWithOptions(ctx context.Context, id int, opts ...Option) (*dto.Problem, error) {
 	problem, err := s.repo.Get(ctx, id)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get problem by id")
 		return nil, fmt.Errorf("failed to get problem by id: %w", err)
 	}
 
-	template, err := s.templateSvc.GetByProblemIDAndLanguage(ctx, id, language)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to get template")
-		return nil, fmt.Errorf("failed to get template: %w", err)
+	options := &options{
+		withTemplate:  false,
+		withLanguages: false,
+		language:      "",
+	}
+	for _, opt := range opts {
+		opt(options)
 	}
 
-	return dto.ToDTO(problem, template), nil
+	if options.withLanguage && options.language == "" {
+		log.Warn().Msg("Empty language")
+		return nil, fmt.Errorf("empty language")
+	}
+
+	var template *templateDTO.Template
+	if options.withTemplate {
+		template, err = s.templateSvc.GetByProblemIDAndLanguage(ctx, id, options.language)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to get template")
+			return nil, fmt.Errorf("failed to get template: %w", err)
+		}
+	}
+
+	var languages []string
+	if options.withLanguages {
+		languages, err = s.templateSvc.GetLanguagesByProblemID(ctx, id)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to get languages")
+			return nil, fmt.Errorf("failed to get languages: %w", err)
+		}
+	}
+
+	return dto.ToDTO(problem, template, languages), nil
 }
 
 func (s *Service) ListByLessonID(ctx context.Context, lessonID int) ([]*dto.Problem, error) {
@@ -76,7 +131,19 @@ func (s *Service) ListByLessonID(ctx context.Context, lessonID int) ([]*dto.Prob
 		return nil, fmt.Errorf("failed to get problems by lesson id: %w", err)
 	}
 
-	return dto.ToDTOList(problems), nil
+	problemsDTO := dto.ToDTOList(problems)
+
+	for _, problem := range problemsDTO {
+		languages, err := s.templateSvc.GetLanguagesByProblemID(ctx, problem.ID)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to get languages")
+			continue
+		}
+
+		problem.Languages = languages
+	}
+
+	return problemsDTO, nil
 }
 
 func (s *Service) Submit(ctx context.Context, submit *dto.ProblemSubmit) (int, error) {

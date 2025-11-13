@@ -54,3 +54,38 @@ func (r *Repository) GetByProblemIDAndLanguage(
 
 	return template, nil
 }
+
+func (r *Repository) GetLanguagesByProblemID(ctx context.Context, problemID int) ([]string, error) {
+	query := `
+		SELECT
+			language
+		FROM templates
+		WHERE problem_id = $1	
+	`
+
+	rows, err := r.db.Pool.Query(ctx, query, problemID)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to create get languages query")
+		return nil, fmt.Errorf("failed to create get languages query: %w", err)
+	}
+	defer rows.Close()
+
+	languages := make([]string, 0)
+
+	for rows.Next() {
+		var language string
+
+		if err := rows.Scan(&language); err != nil {
+			log.Error().Err(err).Msg("Failed to scan language")
+			return nil, fmt.Errorf("failed to scan language: %w", err)
+		}
+
+		languages = append(languages, language)
+	}
+	if err := rows.Err(); err != nil {
+		log.Error().Err(err).Msg("Failed to iterate languages")
+		return nil, fmt.Errorf("failed to iterate languages: %w", err)
+	}
+
+	return languages, nil
+}

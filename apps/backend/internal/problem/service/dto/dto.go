@@ -27,9 +27,10 @@ type Problem struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	Template    *templateDTO.Template
+	Languages   []string
 }
 
-func ToDTO(problem *model.Problem, template *templateDTO.Template) *Problem {
+func ToDTO(problem *model.Problem, template *templateDTO.Template, languages []string) *Problem {
 	return &Problem{
 		ID:          problem.ID,
 		LessonID:    problem.LessonID,
@@ -41,6 +42,7 @@ func ToDTO(problem *model.Problem, template *templateDTO.Template) *Problem {
 		CreatedAt:   problem.CreatedAt,
 		UpdatedAt:   problem.UpdatedAt,
 		Template:    template,
+		Languages:   languages,
 	}
 }
 
@@ -48,7 +50,7 @@ func ToDTOList(problems []*model.Problem) []*Problem {
 	ans := make([]*Problem, 0, len(problems))
 
 	for _, problem := range problems {
-		ans = append(ans, ToDTO(problem, nil))
+		ans = append(ans, ToDTO(problem, nil, nil))
 	}
 
 	return ans
@@ -66,6 +68,7 @@ func ToAPI(problem *Problem) api.ProblemGetResponse {
 		CreatedAt:   problem.CreatedAt,
 		UpdatedAt:   problem.UpdatedAt,
 		Template:    templateDTO.ToAPI(problem.Template),
+		Languages:   problem.Languages,
 	}
 }
 
