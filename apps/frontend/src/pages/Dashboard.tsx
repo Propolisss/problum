@@ -21,9 +21,13 @@ export default function Dashboard() {
                 {courses?.map((course) => (
                     <Card key={course.id} className="flex flex-col">
                         <h2 className="text-xl font-semibold text-foreground">
-                            <Link to={`/courses/${course.id}`} className="hover:underline">
-                                {course.name}
-                            </Link>
+                            {course.enrolled ? (
+                                <Link to={`/courses/${course.id}`} className="hover:underline">
+                                    {course.name}
+                                </Link>
+                            ) : (
+                                <span>{course.name}</span>
+                            )}
                         </h2>
                         <p className="text-sm text-gray-600 mt-2 flex-grow">{course.description}</p>
 

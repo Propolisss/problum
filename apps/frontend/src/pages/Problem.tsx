@@ -32,7 +32,7 @@ export default function Problem() {
     const numericProblemId = Number(problemId);
 
     const [language, setLanguage] = useState('go');
-    const { data: problem, isLoading: isLoadingProblem, isRefetching } = useProblem(numericCourseId, numericProblemId, language);
+    const { data: problem, isLoading: isLoadingProblem, isRefetching, isError } = useProblem(numericCourseId, numericProblemId, language);
     const { data: pastAttempts } = useProblemAttempts(numericCourseId, numericProblemId);
 
     const storageKey = useMemo(() => `draft_problem_${numericProblemId}_${language}`, [numericProblemId, language]);
@@ -107,7 +107,17 @@ export default function Problem() {
         submissionMutation.mutate({ language, code });
     };
 
-    if (isLoadingProblem && !problem) return <Card>Загружаем задачу...</Card>;
+    if (isLoadingProblem) return <Card>Загружаем задачу...</Card>;
+
+    if (isError) {
+        return (
+            <Card className="text-center p-8">
+                <h2 className="text-xl font-bold">Ошибка</h2>
+                <p className="text-gray-600">Задача недоступна или не существует.</p>
+            </Card>
+        );
+    }
+
     if (!problem) return <Card>Не удалось загрузить задачу</Card>;
 
     const isSubmitting = submissionMutation.isPending || (isPolling && attemptResult?.status === 'pending');

@@ -1,7 +1,20 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { fetchCourses, fetchCourse, fetchLesson, fetchProblem } from '../../api/core';
 import { enrollInCourse } from '../../api/enrollments';
 import { fetchAttemptsForProblem } from '../../api/attempts';
+import axios from 'axios';
+
+function useApiQuery<T>(options: UseQueryOptions<T, Error, T, any[]>) {
+  return useQuery<T, Error, T, any[]>({
+    ...options,
+    retry: (failureCount, error) => {
+      if (axios.isAxiosError(error) && error.response?.status === 403) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+  });
+}
 
 export function useCourses() {
   return useQuery({
@@ -12,15 +25,16 @@ export function useCourses() {
 }
 
 export function useCourse(id: number) {
-  return useQuery({
+  return useApiQuery({
     queryKey: ['course', id],
     queryFn: () => fetchCourse(id),
     staleTime: 1000 * 60,
+    enabled: !!id,
   });
 }
 
 export function useLesson(courseId: number, lessonId: number) {
-  return useQuery({
+  return useApiQuery({
     queryKey: ['course', courseId, 'lesson', lessonId],
     queryFn: () => fetchLesson(courseId, lessonId),
     enabled: !!courseId && !!lessonId,
@@ -28,7 +42,7 @@ export function useLesson(courseId: number, lessonId: number) {
 }
 
 export function useProblem(courseId: number, problemId: number, language: string) {
-  return useQuery({
+  return useApiQuery({
     queryKey: ['course', courseId, 'problem', problemId, language],
     queryFn: () => fetchProblem(courseId, problemId, language),
     enabled: !!courseId && !!problemId && !!language,

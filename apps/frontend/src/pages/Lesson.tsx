@@ -8,7 +8,17 @@ export default function Lesson() {
     const { data: lesson, isLoading, isError } = useLesson(Number(courseId), Number(lessonId));
 
     if (isLoading) return <Card>Загружаем урок...</Card>;
-    if (isError || !lesson) return <Card>Урок не найден</Card>;
+
+    if (isError) {
+        return (
+            <Card className="text-center p-8">
+                <h2 className="text-xl font-bold">Ошибка</h2>
+                <p className="text-gray-600">Урок недоступен или не существует.</p>
+            </Card>
+        );
+    }
+
+    if (!lesson) return <Card>Урок не найден</Card>;
 
     return (
         <Card>
