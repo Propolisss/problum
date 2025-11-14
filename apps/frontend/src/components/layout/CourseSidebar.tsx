@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useParams } from 'react-router-dom';
-import type { Course, Problem } from '../../types';
+import type { Course, Lesson, Problem } from '../../types';
 import { BookText, Code2 } from 'lucide-react';
 
 type Props = {
@@ -9,6 +9,10 @@ type Props = {
 
 export default function CourseSidebar({ course }: Props) {
     const { lessonId, problemId } = useParams();
+
+    const sortedLessons = course.lessons
+        ? [...course.lessons].sort((a, b) => a.position - b.position)
+        : [];
 
     const baseLinkClasses = "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors";
     const inactiveClasses = "text-gray-600 hover:bg-secondary";
@@ -31,7 +35,7 @@ export default function CourseSidebar({ course }: Props) {
                 <p className="text-xs text-gray-500">Оглавление курса</p>
             </div>
             <nav className="p-4 space-y-1">
-                {course.lessons?.map((lesson) => (
+                {sortedLessons.map((lesson) => (
                     <div key={lesson.id}>
                         <NavLink
                             to={`/courses/${course.id}/lessons/${lesson.id}`}

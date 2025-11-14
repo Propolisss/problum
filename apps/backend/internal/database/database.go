@@ -51,6 +51,8 @@ func New(cfg *config.DB) (*DB, error) {
 }
 
 func (db *DB) Migrate() error {
+	log.Info().Msg("Migrating database")
+
 	sqlDB := stdlib.OpenDB(*db.Pool.Config().ConnConfig)
 	defer sqlDB.Close()
 

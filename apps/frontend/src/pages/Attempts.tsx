@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAttemptsForUser } from '../api/attempts';
 import { Link } from 'react-router-dom';
@@ -20,6 +20,11 @@ export default function Attempts() {
         queryFn: fetchAttemptsForUser
     });
 
+    const sortedAttempts = useMemo(() => {
+        if (!attempts) return [];
+        return [...attempts].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }, [attempts]);
+
     if (isLoading) return <div>Загружаем историю...</div>;
 
     return (
@@ -27,9 +32,9 @@ export default function Attempts() {
             <h1 className="text-3xl font-bold tracking-tight">История попыток</h1>
 
             <Card>
-                {attempts && attempts.length > 0 ? (
+                {sortedAttempts && sortedAttempts.length > 0 ? (
                     <div className="space-y-3">
-                        {attempts.map((a) => (
+                        {sortedAttempts.map((a) => (
                             <Link to={`/attempts/${a.id}`} key={a.id}>
                                 <div className="p-4 bg-secondary rounded-lg flex items-center justify-between hover:bg-secondary/80 transition-colors">
                                     <div>

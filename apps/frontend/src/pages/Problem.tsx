@@ -65,16 +65,20 @@ export default function Problem() {
     useEffect(() => {
         isCodeInitialized.current = false;
         setCode('// Загрузка шаблона...');
-    }, [language]);
+    }, [language, problemId]);
 
     useEffect(() => {
+        if (!problem || problem.id !== numericProblemId) {
+            return;
+        }
+
         if (problem?.template?.code && !isCodeInitialized.current) {
             const draft = loadDraft(storageKey);
             setCode(draft ?? problem.template.code);
             isCodeInitialized.current = true;
             setTimeout(() => editorRef.current?.getAction('editor.action.formatDocument')?.run(), 200);
         }
-    }, [problem, storageKey]);
+    }, [problem, storageKey, numericProblemId]);
 
     useEffect(() => {
         if (!isCodeInitialized.current) return;

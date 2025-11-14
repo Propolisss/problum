@@ -12,6 +12,9 @@ export default function CourseIndexPage() {
         return <Navigate to="/" replace />;
     }
 
-    const firstLessonId = course.lessons[0].id;
+    const sortedLessons = [...course.lessons].sort((a, b) => a.position - b.position);
+    if (sortedLessons.length === 0) return <Navigate to="/" replace />;
+    const firstLessonId = sortedLessons[0].id;
+
     return <Navigate to={`/courses/${courseId}/lessons/${firstLessonId}`} replace />;
 }

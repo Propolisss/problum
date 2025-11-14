@@ -81,7 +81,7 @@ func (r *Repository) ListByLessonID(ctx context.Context, id int) ([]*model.Probl
 	problems := make([]*model.Problem, 0)
 	for rows.Next() {
 		problem := &model.Problem{}
-		if err := r.db.Pool.QueryRow(ctx, query, id).Scan(
+		if err := rows.Scan(
 			&problem.ID,
 			&problem.LessonID,
 			&problem.Name,

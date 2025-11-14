@@ -35,7 +35,7 @@ export default function CourseLayout() {
     }
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-screen-xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-screen-xl mx-auto items-start">
             <div className="lg:col-span-3">
                 <Card className="p-0 sticky top-24">
                     <CourseSidebar course={course} />

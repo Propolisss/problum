@@ -31,7 +31,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_volume:/var/lib/postgresql/data
-      - ./apps/backend/migrations:/docker-entrypoint-initdb.d
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U problum" ]
       interval: 3s

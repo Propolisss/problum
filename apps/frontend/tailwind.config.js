@@ -1,3 +1,4 @@
+/** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
@@ -24,6 +25,26 @@ export default {
         md: `calc(var(--radius) - 2px)`,
         sm: 'calc(var(--radius) - 4px)',
       },
+      typography: ({ theme }) => ({
+        DEFAULT: {
+          css: {
+            'code::before': {
+              content: '""',
+            },
+            'code::after': {
+              content: '""',
+            },
+            code: {
+              backgroundColor: theme('colors.secondary.DEFAULT'),
+              color: theme('colors.secondary.foreground'),
+              fontWeight: '500',
+              padding: '2px 6px',
+              borderRadius: '6px',
+              border: `1px solid ${theme('colors.border')}`,
+            },
+          },
+        },
+      }),
     },
   },
   plugins: [require('@tailwindcss/typography')],
