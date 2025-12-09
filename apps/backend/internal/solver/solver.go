@@ -468,11 +468,11 @@ func getDuration(metadata map[string]string) time.Duration {
 
 	ans := time.Duration(0)
 	if ok1 && ok2 {
-		ans = min(time.Duration(timeSeconds)*time.Nanosecond, time.Duration(timeWallSeconds)*time.Nanosecond)
+		ans = min(time.Duration(timeSeconds*float64(time.Second)), time.Duration(timeWallSeconds*float64(time.Second)))
 	} else if ok1 {
-		ans = time.Duration(timeSeconds) * time.Nanosecond
+		ans = time.Duration(timeSeconds * float64(time.Second))
 	} else {
-		ans = time.Duration(timeWallSeconds) * time.Nanosecond
+		ans = time.Duration(timeWallSeconds * float64(time.Second))
 	}
 
 	return ans

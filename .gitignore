@@ -5,3 +5,4 @@ node_modules/
 dist/
 .env
 comparison/
+.DS_STORE
