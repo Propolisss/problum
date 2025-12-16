@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAttemptById } from '../api/attempts';
 import { Card } from '../components/ui';
-import { CheckCircle2, XCircle, ArrowLeft, Clock, MemoryStick, Code } from 'lucide-react';
+import { CheckCircle2, XCircle, ArrowLeft, Clock, MemoryStick, Code, AlertTriangle } from 'lucide-react';
 import { formatMemory } from '../utils/formatters';
 import CodeEditor from '../components/CodeEditor';
 
@@ -20,18 +20,29 @@ export default function AttemptDetail() {
     if (!data) return <div>Попытка не найдена</div>;
 
     const isSuccess = data.status === 'AC';
-    const StatusIcon = isSuccess ? CheckCircle2 : (data.status === 'pending' ? Clock : XCircle);
+    
+    let StatusIcon = isSuccess ? CheckCircle2 : XCircle;
+    if (data.status === 'pending') StatusIcon = Clock;
+    if (data.status === 'CE' || data.status === 'XX') StatusIcon = AlertTriangle;
+
     const statusColor = isSuccess ? 'text-green-600' : 'text-red-600';
-    const statusText = {
+    
+    const statusText: Record<string, string> = {
         AC: "Решение принято",
         WA: "Неверный ответ",
         CE: "Ошибка компиляции",
         RE: "Ошибка выполнения",
         TLE: "Превышен лимит времени",
         MLE: "Превышен лимит памяти",
+        
+        TO: "Превышен лимит времени (Time Limit)",
+        SG: "Завершено сигналом (Signal)",
+        XX: "Внутренняя ошибка системы",
+        
         pending: "В очереди"
-    }[data.status] || "Ошибка";
+    };
 
+    const displayStatus = statusText[data.status] || `Ошибка (${data.status})`;
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
@@ -48,7 +59,7 @@ export default function AttemptDetail() {
                         <div className="font-semibold text-lg">Задача #{data.problem_id}</div>
                         <div className={`flex items-center gap-2 font-bold ${statusColor}`}>
                             <StatusIcon className="w-5 h-5" />
-                            <span>{statusText} ({data.status})</span>
+                            <span>{displayStatus}</span>
                         </div>
                     </div>
                     <div className="text-sm text-gray-500 mt-2">

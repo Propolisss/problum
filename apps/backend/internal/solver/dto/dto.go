@@ -8,3 +8,8 @@ type Result struct {
 	Status       string        `db:"status"`
 	ErrorMessage *string       `db:"error_message"`
 }
+
+type Limits struct {
+	TimeLimit   time.Duration
+	MemoryLimit int64
+}

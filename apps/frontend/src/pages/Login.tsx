@@ -19,7 +19,7 @@ export default function Login() {
         setError(null)
 
         if (!loginVal || !password) {
-            setError('Заполни все поля')
+            setError('Заполните все поля')
             return
         }
 
@@ -28,7 +28,8 @@ export default function Login() {
             await login(loginVal, password)
             navigate(from, { replace: true })
         } catch (e: any) {
-            setError(e?.response?.data?.message || e?.message || 'Не удалось войти')
+            setError('Произошла ошибка. Попробуйте позже.')
+            console.error('Login error:', e)
         } finally {
             setLoading(false)
         }

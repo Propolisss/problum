@@ -20,6 +20,9 @@ import (
 	testDTO "problum/internal/test/service/dto"
 	"problum/internal/utils"
 
+	problemSvc "problum/internal/problem/service"
+	problemDTO "problum/internal/problem/service/dto"
+
 	"github.com/bytedance/sonic"
 	"github.com/flosch/pongo2/v6"
 	"github.com/rs/zerolog/log"
@@ -39,9 +42,14 @@ type TemplateService interface {
 	GetByProblemIDAndLanguage(context.Context, int, string) (*templateDTO.Template, error)
 }
 
+type ProblemService interface {
+	GetWithOptions(context.Context, int, ...problemSvc.Option) (*problemDTO.Problem, error)
+}
+
 type Solver struct {
 	testSvc     TestService
 	templateSvc TemplateService
+	problemSvc  ProblemService
 }
 
 type runIsolateConfig struct {
@@ -57,10 +65,11 @@ type runIsolateConfig struct {
 	RunCommand []string
 }
 
-func New(testSvc TestService, templateSvc TemplateService) *Solver {
+func New(testSvc TestService, templateSvc TemplateService, problemSvc ProblemService) *Solver {
 	return &Solver{
 		testSvc:     testSvc,
 		templateSvc: templateSvc,
+		problemSvc:  problemSvc,
 	}
 }
 
@@ -77,6 +86,17 @@ func (s *Solver) Solve(ctx context.Context, attempt *attemptDTO.Attempt) (*dto.R
 		return nil, fmt.Errorf("failed to get template for problem: %w", err)
 	}
 
+	problem, err := s.problemSvc.GetWithOptions(ctx, test.ProblemID)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get problem")
+		return nil, fmt.Errorf("failed to get problem")
+	}
+
+	limits := &dto.Limits{
+		TimeLimit:   problem.TimeLimit / time.Second,
+		MemoryLimit: problem.MemoryLimit,
+	}
+
 	metadata, err := parseTemplateMetadata(template.Metadata)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to parse template metadata")
@@ -87,16 +107,16 @@ func (s *Solver) Solve(ctx context.Context, attempt *attemptDTO.Attempt) (*dto.R
 
 	switch attempt.Language {
 	case "python":
-		return s.solvePython(test, metadata)
+		return s.solvePython(test, metadata, limits)
 	case "go":
-		return s.solveGolang(test, metadata)
+		return s.solveGolang(test, metadata, limits)
 	default:
 		log.Error().Err(err).Msg("Failed to get test for problem")
 		return nil, fmt.Errorf("unsupported language")
 	}
 }
 
-func (s *Solver) solvePython(test *testDTO.Test, md map[string]any) (*dto.Result, error) {
+func (s *Solver) solvePython(test *testDTO.Test, md map[string]any, limits *dto.Limits) (*dto.Result, error) {
 	result := &dto.Result{}
 
 	if err := s.renderTemplate("code.py.j2", md); err != nil {
@@ -109,7 +129,7 @@ func (s *Solver) solvePython(test *testDTO.Test, md map[string]any) (*dto.Result
 		return nil, fmt.Errorf("failed to init isolate: %w", err)
 	}
 
-	if err := runTests(path, "python", test.Tests, result); err != nil {
+	if err := runTests(path, "python", test.Tests, result, limits); err != nil {
 		log.Error().Err(err).Msg("Failed to run tests")
 		return nil, fmt.Errorf("failed to run tests: %w", err)
 	}
@@ -122,7 +142,7 @@ func (s *Solver) solvePython(test *testDTO.Test, md map[string]any) (*dto.Result
 	return result, nil
 }
 
-func (s *Solver) solveGolang(test *testDTO.Test, md map[string]any) (*dto.Result, error) {
+func (s *Solver) solveGolang(test *testDTO.Test, md map[string]any, limits *dto.Limits) (*dto.Result, error) {
 	result := &dto.Result{}
 
 	if err := s.renderTemplate("code.go.j2", md); err != nil {
@@ -150,7 +170,7 @@ func (s *Solver) solveGolang(test *testDTO.Test, md map[string]any) (*dto.Result
 		return nil, fmt.Errorf("failed to init isolate: %w", err)
 	}
 
-	if err := runTests(path, "go", test.Tests, result); err != nil {
+	if err := runTests(path, "go", test.Tests, result, limits); err != nil {
 		log.Error().Err(err).Msg("Failed to run tests")
 		return nil, fmt.Errorf("failed to run tests: %w", err)
 	}
@@ -198,7 +218,7 @@ func cleanupIsolate() error {
 	return nil
 }
 
-func getIsolateConfig(path, language string) (*runIsolateConfig, error) {
+func getIsolateConfig(path, language string, limits *dto.Limits) (*runIsolateConfig, error) {
 	cfg := &runIsolateConfig{}
 
 	boxPath := strings.TrimSpace(path)
@@ -224,9 +244,9 @@ func getIsolateConfig(path, language string) (*runIsolateConfig, error) {
 		}
 
 		cfg.BoxFile = goBoxFile
-		cfg.Time = fmt.Sprintf("%d", 5)
-		cfg.WallTime = fmt.Sprintf("%d", 5)
-		cfg.Mem = fmt.Sprintf("%d", 4096*1024)
+		cfg.Time = fmt.Sprintf("%d", limits.TimeLimit)
+		cfg.WallTime = fmt.Sprintf("%d", limits.TimeLimit)
+		cfg.Mem = fmt.Sprintf("%d", 4*1024*1024+toKiloBytes(limits.MemoryLimit))
 		cfg.Processes = fmt.Sprintf("--processes=%d", 64)
 		cfg.RunCommand = []string{"--run", "--", "./solve"}
 	case "python":
@@ -243,9 +263,9 @@ func getIsolateConfig(path, language string) (*runIsolateConfig, error) {
 		}
 
 		cfg.BoxFile = pythonBoxFile
-		cfg.Time = fmt.Sprintf("%d", 5)
-		cfg.WallTime = fmt.Sprintf("%d", 5)
-		cfg.Mem = fmt.Sprintf("%d", 4096*1024)
+		cfg.Time = fmt.Sprintf("%d", limits.TimeLimit)
+		cfg.WallTime = fmt.Sprintf("%d", limits.TimeLimit)
+		cfg.Mem = fmt.Sprintf("%d", 4096*1024+toKiloBytes(limits.MemoryLimit))
 		cfg.RunCommand = []string{"--run", "--", "/usr/bin/python3", "./code.py"}
 	default:
 		return nil, fmt.Errorf("unsupported language")
@@ -254,7 +274,7 @@ func getIsolateConfig(path, language string) (*runIsolateConfig, error) {
 	return cfg, nil
 }
 
-func runIsolate(cfg *runIsolateConfig, test *testDTO.TestCase, result *dto.Result) error {
+func runIsolate(cfg *runIsolateConfig, test *testDTO.TestCase, result *dto.Result, limits *dto.Limits) error {
 	if err := os.WriteFile(cfg.StdinFile, test.Input, 0o644); err != nil {
 		log.Error().Err(err).Msg("Failed to write stdin")
 		return err
@@ -325,6 +345,12 @@ func runIsolate(cfg *runIsolateConfig, test *testDTO.TestCase, result *dto.Resul
 	}
 	result.MemoryUsage = max(result.MemoryUsage, getMemoryUsage(metadata))
 
+	if result.MemoryUsage > limits.MemoryLimit {
+		result.Status = "MLE"
+		result.ErrorMessage = utils.Ptr("Memory limit exceeded")
+		return errWrongAnswer
+	}
+
 	if string(stdoutData) != string(test.Output) {
 		result.Status = "WA"
 		result.ErrorMessage = utils.Ptr("Wrong answer")
@@ -334,8 +360,8 @@ func runIsolate(cfg *runIsolateConfig, test *testDTO.TestCase, result *dto.Resul
 	return nil
 }
 
-func runTests(path, language string, tests []testDTO.TestCase, result *dto.Result) error {
-	cfg, err := getIsolateConfig(path, language)
+func runTests(path, language string, tests []testDTO.TestCase, result *dto.Result, limits *dto.Limits) error {
+	cfg, err := getIsolateConfig(path, language, limits)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get isolate config")
 		return fmt.Errorf("failed to get isolate config: %w", err)
@@ -343,7 +369,7 @@ func runTests(path, language string, tests []testDTO.TestCase, result *dto.Resul
 	result.Status = "AC"
 
 	for _, t := range tests {
-		if err := runIsolate(cfg, &t, result); err != nil {
+		if err := runIsolate(cfg, &t, result, limits); err != nil {
 			log.Error().Err(err).Msg("Failed to run test")
 			break
 		}
@@ -492,4 +518,8 @@ func getMemoryUsage(metadata map[string]string) int64 {
 
 	// to bytes
 	return memory * 1024
+}
+
+func toKiloBytes(bytes int64) int64 {
+	return bytes / 1024
 }

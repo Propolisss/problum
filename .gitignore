@@ -6,3 +6,4 @@ dist/
 .env
 comparison/
 .DS_STORE
+*puml*

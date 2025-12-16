@@ -19,7 +19,7 @@ export default function Register() {
         setError(null)
 
         if (!loginVal || !password || !repeated) {
-            setError('Заполни все поля')
+            setError('Заполните все поля')
             return
         }
         if (password !== repeated) {
@@ -33,7 +33,8 @@ export default function Register() {
             await doLogin(loginVal, password)
             navigate('/', { replace: true })
         } catch (e: any) {
-            setError(e?.response?.data?.message || e?.message || 'Не удалось зарегистрироваться')
+            setError('Произошла ошибка. Попробуйте позже.')
+            console.error('Registration error:', e)
         } finally {
             setLoading(false)
         }

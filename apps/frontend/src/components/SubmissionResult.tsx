@@ -1,7 +1,7 @@
 import React from 'react'
 import type { APIAttempt } from '../api/attempts'
 import { Card } from './ui'
-import { CheckCircle2, XCircle, AlertTriangle, Loader2, Clock, MemoryStick } from 'lucide-react'
+import { CheckCircle2, XCircle, AlertTriangle, Loader2, Clock, MemoryStick, Skull } from 'lucide-react'
 import { formatMemory } from '../utils/formatters'
 
 type Props = {
@@ -19,13 +19,18 @@ const Stat = ({ label, value, icon }: { label: string; value: string | number, i
     </div>
 )
 
-const statusConfig = {
+const statusConfig: Record<string, any> = {
     AC: { text: 'Решение принято', icon: CheckCircle2, color: 'text-green-600' },
     WA: { text: 'Неверный ответ', icon: XCircle, color: 'text-red-600' },
     CE: { text: 'Ошибка компиляции', icon: AlertTriangle, color: 'text-yellow-600' },
     RE: { text: 'Ошибка выполнения', icon: AlertTriangle, color: 'text-red-600' },
     TLE: { text: 'Превышен лимит времени', icon: Clock, color: 'text-red-600' },
     MLE: { text: 'Превышен лимит памяти', icon: MemoryStick, color: 'text-red-600' },
+
+    TO: { text: 'Превышен лимит времени', icon: Clock, color: 'text-red-600' },
+    SG: { text: 'Убито сигналом', icon: Skull, color: 'text-red-600' },
+    XX: { text: 'Внутренняя ошибка', icon: AlertTriangle, color: 'text-yellow-600' },
+
     pending: { text: 'В очереди...', icon: Loader2, color: 'text-gray-600' },
 };
 

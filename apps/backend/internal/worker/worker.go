@@ -26,6 +26,10 @@ import (
 	testRepository "problum/internal/test/repository"
 	testService "problum/internal/test/service"
 
+	problemRepository "problum/internal/problem/repository"
+	problemService "problum/internal/problem/service"
+	problemDTO "problum/internal/problem/service/dto"
+
 	"github.com/bytedance/sonic"
 	natsgo "github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
@@ -41,6 +45,10 @@ type Solver interface {
 	Solve(context.Context, *attemptDTO.Attempt) (*solverDTO.Result, error)
 }
 
+type ProblemService interface {
+	GetWithOptions(context.Context, int, ...problemService.Option) (*problemDTO.Problem, error)
+}
+
 type Worker struct {
 	cfg           *config.Config
 	db            *database.DB
@@ -50,6 +58,7 @@ type Worker struct {
 	attemptStream jetstream.Stream
 	consumer      jetstream.Consumer
 	attemptSvc    AttemptService
+	problemSvc    ProblemService
 	solver        Solver
 }
 
@@ -93,7 +102,10 @@ func New() (*Worker, error) {
 	testRepo := testRepository.New(db)
 	testSvc := testService.New(testRepo)
 
-	solver := solver.New(testSvc, templateSvc)
+	problemRepo := problemRepository.New(db)
+	problemSvc := problemService.New(problemRepo, js, attemptSvc, templateSvc)
+
+	solver := solver.New(testSvc, templateSvc, problemSvc)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

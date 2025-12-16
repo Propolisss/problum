@@ -8,7 +8,7 @@ export type APIAttempt = {
   memory_usage: number;
   language: string;
   code: string;
-  status: 'pending' | 'AC' | 'WA' | 'CE' | 'RE' | 'TLE' | 'MLE';
+  status: 'pending' | 'AC' | 'WA' | 'CE' | 'RE' | 'TLE' | 'MLE' | 'TO' | 'SG' | 'XX';
   error_message: string | null;
   created_at: string;
   updated_at: string;
