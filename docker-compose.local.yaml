@@ -87,3 +87,7 @@ volumes:
   postgres_volume:
   redis_volume:
   nats_volume:
+
+networks:
+  default:
+    name: problum_network
