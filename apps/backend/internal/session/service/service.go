@@ -6,6 +6,7 @@ import (
 	"problum/internal/model"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -source=service.go -destination=mocks/mock_service.go -package=mocks
 type Repository interface {
 	GetByRefreshHash(context.Context, string) (*model.UserSession, error)
 	Create(context.Context, *model.UserSession) (*model.UserSession, error)

@@ -62,6 +62,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -source=app.go -destination=mocks/mock_service.go -package=mocks
 type AttemptSvc interface {
 	Get(context.Context, int) (*attemptDTO.Attempt, error)
 }

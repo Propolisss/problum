@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -source=http.go -destination=mocks/mock_service.go -package=mocks
 type Service interface {
 	Get(context.Context, int) (*dto.User, error)
 }

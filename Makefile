@@ -8,6 +8,8 @@ PLATFORMS := linux/amd64,linux/arm64
 
 TESTER_IMAGE := problum-integration-tester
 NETWORK_NAME := problum_network
+BACKEND_DIR := apps/backend
+GOLANGCI_CONFIG := ../../.golangci.yml
 
 .PHONY: up
 up:
@@ -16,6 +18,22 @@ up:
 .PHONY: down
 down:
 	docker compose -f ${DOCKER_COMPOSE_FILE} down
+
+.PHONY: generate
+generate:
+	cd ${BACKEND_DIR} && go generate ./internal/...
+
+.PHONY: fmt
+fmt:
+	cd ${BACKEND_DIR} && go fmt ./...
+
+.PHONY: tests
+tests:
+	cd ${BACKEND_DIR} && go test -count=1 -race ./internal/...
+
+.PHONY: lint
+lint:
+	cd ${BACKEND_DIR} && golangci-lint run --config ${GOLANGCI_CONFIG} ./...
 
 .PHONY: push
 push:

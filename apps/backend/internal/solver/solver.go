@@ -34,6 +34,7 @@ var (
 	errNotNilExitCode = errors.New("not nil exit code")
 )
 
+//go:generate go run go.uber.org/mock/mockgen -source=solver.go -destination=mocks/mock_service.go -package=mocks
 type TestService interface {
 	GetByProblemID(context.Context, int) (*testDTO.Test, error)
 }

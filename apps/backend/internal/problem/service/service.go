@@ -14,6 +14,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -source=service.go -destination=mocks/mock_service.go -package=mocks
 type Repository interface {
 	Get(context.Context, int) (*model.Problem, error)
 	ListByLessonID(context.Context, int) ([]*model.Problem, error)

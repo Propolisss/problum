@@ -24,6 +24,7 @@ type AttemptListResponse struct {
 	Attempts []AttemptGetResponse `json:"attempts"`
 }
 
+//go:generate go run go.uber.org/mock/mockgen -destination=mocks/mock_service.go -package=mocks problum/internal/api AttemptAPI,AuthAPI,CourseAPI,EnrollmentAPI,LessonAPI,ProblemAPI
 type AttemptAPI interface {
 	ListByProblemID(fiber.Ctx) error
 	ListByUserID(fiber.Ctx) error

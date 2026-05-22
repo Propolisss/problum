@@ -11,6 +11,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -source=http.go -destination=mocks/mock_service.go -package=mocks
 type Service interface {
 	ListByProblemID(context.Context, int, int) ([]*dto.Attempt, error)
 	ListByUserID(context.Context, int) ([]*dto.Attempt, error)
