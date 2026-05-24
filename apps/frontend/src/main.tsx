@@ -10,6 +10,7 @@ import {
 import { Toaster, toast } from 'react-hot-toast';
 import App from './App';
 import { AuthProvider } from './features/auth/AuthContext';
+import { ThemeProvider } from './features/theme/ThemeContext';
 import './index.css';
 
 const handleGlobalError = (error: any) => {
@@ -45,12 +46,14 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <App />
-          <Toaster />
-        </BrowserRouter>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <App />
+            <Toaster />
+          </BrowserRouter>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   </React.StrictMode>,
 );

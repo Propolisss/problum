@@ -105,7 +105,7 @@ export default function Profile() {
                 {visibleAttempts && visibleAttempts.length > 0 ? (
                     <div className="space-y-3">
                         {visibleAttempts.map((a) => (
-                            <Link to={`/attempts/${a.id}`} key={a.id}>
+                            <Link to={`/attempts/${a.id}`} key={a.id} className="block">
                                 <div className="p-4 bg-secondary rounded-lg flex items-center justify-between hover:bg-secondary/80 transition-colors">
                                     <div>
                                         <div className="font-semibold">Задача #{a.problem_id}</div>

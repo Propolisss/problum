@@ -165,7 +165,7 @@ export default function Problem() {
                     {pastAttempts && pastAttempts.length > 0 ? (
                         <div className="space-y-2">
                             {[...pastAttempts].sort((a, b) => b.id - a.id).slice(0, 5).map(att => (
-                                <Link key={att.id} to={`/attempts/${att.id}`}>
+                                <Link key={att.id} to={`/attempts/${att.id}`} className="block">
                                     <div className="p-2 bg-secondary rounded-md flex justify-between items-center text-sm hover:bg-secondary/80">
                                         <span className="font-mono text-xs">#{att.id} - {new Date(att.created_at).toLocaleString()}</span>
                                         <AttemptStatusIcon status={att.status} />

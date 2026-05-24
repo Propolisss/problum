@@ -6,35 +6,116 @@
   :root {
     --radius: 0.75rem;
 
-    --background: hsl(0 0% 100%);
-    --foreground: hsl(222.2 84% 4.9%);
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
-    --card: hsl(0 0% 100%);
-    --card-foreground: hsl(222.2 84% 4.9%);
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
 
-    --primary: hsl(222.2 47.4% 11.2%);
-    --primary-foreground: hsl(210 40% 98%);
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: hsl(210 40% 96.1%);
-    --secondary-foreground: hsl(222.2 47.4% 11.2%);
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --border: hsl(214.3 31.8% 91.4%);
-    --input: hsl(214.3 31.8% 91.4%);
-    --ring: hsl(215.1 91.4% 52.9%);
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 215.1 91.4% 52.9%;
+  }
+
+  .dark {
+    color-scheme: dark;
+
+    --background: 222 47% 6%;
+    --foreground: 213 31% 92%;
+
+    --card: 222 40% 9%;
+    --card-foreground: 213 31% 92%;
+
+    --primary: 189 79% 55%;
+    --primary-foreground: 222 47% 7%;
+
+    --secondary: 220 27% 14%;
+    --secondary-foreground: 210 34% 91%;
+
+    --muted: 222 26% 15%;
+    --muted-foreground: 215 18% 68%;
+
+    --border: 219 25% 20%;
+    --input: 219 25% 22%;
+    --ring: 189 79% 55%;
   }
 
   body {
     overflow-y: scroll;
-    background-color: var(--background);
-    color: var(--foreground);
+    background:
+      radial-gradient(circle at top left, hsl(189 79% 55% / 0.14), transparent 34rem),
+      linear-gradient(180deg, hsl(var(--background)), hsl(var(--background)));
+    color: hsl(var(--foreground));
     font-feature-settings:
       'rlig' 1,
       'calt' 1;
   }
 }
 
+.dark .bg-white,
+.dark .bg-gray-50,
+.dark .bg-gray-100 {
+  background-color: hsl(var(--background));
+}
+
+.dark .text-gray-400 {
+  color: hsl(var(--muted-foreground) / 0.72);
+}
+
+.dark .text-gray-500,
+.dark .text-gray-600 {
+  color: hsl(var(--muted-foreground));
+}
+
+.dark .border,
+.dark .border-b,
+.dark .border-t,
+.dark .border-l-2 {
+  border-color: hsl(var(--border));
+}
+
+.dark .shadow,
+.dark .shadow-sm {
+  box-shadow: 0 18px 60px hsl(220 56% 2% / 0.32);
+}
+
+.dark .prose {
+  --tw-prose-body: hsl(var(--muted-foreground));
+  --tw-prose-headings: hsl(var(--foreground));
+  --tw-prose-lead: hsl(var(--muted-foreground));
+  --tw-prose-links: hsl(var(--primary));
+  --tw-prose-bold: hsl(var(--foreground));
+  --tw-prose-counters: hsl(var(--muted-foreground));
+  --tw-prose-bullets: hsl(var(--muted-foreground));
+  --tw-prose-hr: hsl(var(--border));
+  --tw-prose-quotes: hsl(var(--foreground));
+  --tw-prose-quote-borders: hsl(var(--border));
+  --tw-prose-captions: hsl(var(--muted-foreground));
+  --tw-prose-code: hsl(var(--foreground));
+  --tw-prose-pre-code: hsl(var(--foreground));
+  --tw-prose-pre-bg: hsl(var(--secondary));
+  --tw-prose-th-borders: hsl(var(--border));
+  --tw-prose-td-borders: hsl(var(--border));
+}
+
+.dark .prose :where(code):not(:where(pre code)) {
+  background-color: hsl(var(--secondary));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.375rem;
+  padding: 0.125rem 0.375rem;
+}
+
 .react-calendar-heatmap .color-empty {
-  fill: hsl(222.2 47.4% 11.2% / 0.15);
+  fill: hsl(var(--foreground) / 0.15);
 }
 
 .react-calendar-heatmap .color-scale-1 {

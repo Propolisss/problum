@@ -4,7 +4,7 @@ import Navbar from './Navbar'
 
 export default function Layout() {
     return (
-        <div className="min-h-screen bg-gray-100">
+        <div className="min-h-screen bg-background text-foreground">
             <Navbar />
             <main>
                 <div className="container mx-auto py-8 px-6">
