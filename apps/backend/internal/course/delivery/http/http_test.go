@@ -8,6 +8,7 @@ import (
 	"problum/internal/api"
 	"problum/internal/course/delivery/http/mocks"
 	"problum/internal/course/service/dto"
+	"problum/internal/utils"
 
 	"github.com/gofiber/fiber/v3"
 	"go.uber.org/mock/gomock"
@@ -44,7 +45,7 @@ func TestHandlerList(t *testing.T) {
 			handler := New(nil, svc)
 			app.Get("/courses", handler.List)
 
-			resp, err := app.Test(newRequest(http.MethodGet, "/courses", nil))
+			resp, err := app.Test(utils.NewTestRequest(http.MethodGet, "/courses", nil))
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -74,7 +75,7 @@ func TestHandlerGet(t *testing.T) {
 	handler := New(nil, svc)
 	app.Get("/courses/:courseID", handler.Get)
 
-	resp, err := app.Test(newRequest(http.MethodGet, "/courses/3", nil))
+	resp, err := app.Test(utils.NewTestRequest(http.MethodGet, "/courses/3", nil))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

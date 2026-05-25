@@ -10,6 +10,8 @@ TESTER_IMAGE := problum-integration-tester
 NETWORK_NAME := problum_network
 BACKEND_DIR := apps/backend
 GOLANGCI_CONFIG := ../../.golangci.yml
+COVERAGE_OUT := coverage.out
+COVERAGE_HTML := coverage.html
 
 .PHONY: up
 up:
@@ -30,6 +32,23 @@ fmt:
 .PHONY: tests
 tests:
 	cd ${BACKEND_DIR} && go test -count=1 -race ./internal/...
+
+.PHONY: tests-coverage
+tests-coverage:
+	cd ${BACKEND_DIR} && \
+	COVERPKG=$$(go list ./internal/... | grep -v '/mocks' | paste -sd, -) && \
+	go test -count=1 -race -covermode=atomic -coverpkg="$$COVERPKG" -coverprofile=${COVERAGE_OUT} ./internal/... && \
+	grep -v -E "mock|_mock.go|/mocks/" ${COVERAGE_OUT} > ${COVERAGE_OUT}.tmp && \
+	mv ${COVERAGE_OUT}.tmp ${COVERAGE_OUT} && \
+	go tool cover -func=${COVERAGE_OUT} | tail -n 1
+
+.PHONY: tests-coverage-open
+tests-coverage-open: tests-coverage
+	cd ${BACKEND_DIR} && go tool cover -html=${COVERAGE_OUT}
+
+.PHONY: clean
+clean:
+	find . -type f \( -name '*.out' -o -name '${COVERAGE_HTML}' \) -delete
 
 .PHONY: lint
 lint:
