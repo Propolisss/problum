@@ -32,6 +32,19 @@ func New(cfg *config.Config, svc Service) *Handler {
 	}
 }
 
+// Get returns a lesson.
+// @Summary Get lesson
+// @Description Returns a lesson by ID with problems.
+// @Tags lessons
+// @Produce json
+// @Param courseID path int true "Course ID"
+// @Param lessonID path int true "Lesson ID"
+// @Success 200 {object} api.LessonGetResponse
+// @Failure 401 {string} string
+// @Failure 403 {string} string
+// @Failure 500 {string} string
+// @Security BearerAuth
+// @Router /courses/{courseID}/lessons/{lessonID} [get]
 func (h *Handler) Get(c fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("lessonID"))
 	if err != nil {

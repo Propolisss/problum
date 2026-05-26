@@ -14,7 +14,7 @@ type LoginRequest struct {
 type LoginResponse struct {
 	AccessToken  string        `json:"access_token"`
 	RefreshToken string        `json:"-"`
-	ExpiresAt    time.Duration `json:"expires_at"`
+	ExpiresAt    time.Duration `json:"expires_at" swaggertype:"integer"`
 }
 
 type RegisterRequest struct {
@@ -26,13 +26,13 @@ type RegisterRequest struct {
 type RegisterResponse struct {
 	AccessToken  string        `json:"access_token"`
 	RefreshToken string        `json:"-"`
-	ExpiresAt    time.Duration `json:"expires_at"`
+	ExpiresAt    time.Duration `json:"expires_at" swaggertype:"integer"`
 }
 
 type RefreshResponse struct {
 	AccessToken  string        `json:"access_token"`
 	RefreshToken string        `json:"-"`
-	ExpiresAt    time.Duration `json:"expires_at"`
+	ExpiresAt    time.Duration `json:"expires_at" swaggertype:"integer"`
 }
 
 type AuthAPI interface {

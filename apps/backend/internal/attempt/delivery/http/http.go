@@ -30,6 +30,19 @@ func New(cfg *config.Config, svc Service) *Handler {
 	}
 }
 
+// ListByProblemID returns attempts for a problem.
+// @Summary List problem attempts
+// @Description Returns the authenticated user's attempts for a problem.
+// @Tags attempts
+// @Produce json
+// @Param courseID path int true "Course ID"
+// @Param problemID path int true "Problem ID"
+// @Success 200 {object} api.AttemptListResponse
+// @Failure 401 {string} string
+// @Failure 403 {string} string
+// @Failure 404 {string} string
+// @Security BearerAuth
+// @Router /courses/{courseID}/problems/{problemID}/attempts [get]
 func (h *Handler) ListByProblemID(c fiber.Ctx) error {
 	problemID, err := strconv.Atoi(c.Params("problemID"))
 	if err != nil {
@@ -51,6 +64,16 @@ func (h *Handler) ListByProblemID(c fiber.Ctx) error {
 	})
 }
 
+// ListByUserID returns attempts for the current user.
+// @Summary List user attempts
+// @Description Returns all attempts for the authenticated user.
+// @Tags attempts
+// @Produce json
+// @Success 200 {object} api.AttemptListResponse
+// @Failure 401 {string} string
+// @Failure 404 {string} string
+// @Security BearerAuth
+// @Router /attempts [get]
 func (h *Handler) ListByUserID(c fiber.Ctx) error {
 	userID, ok := c.Locals("user_id").(int)
 	if !ok {
@@ -67,6 +90,18 @@ func (h *Handler) ListByUserID(c fiber.Ctx) error {
 	})
 }
 
+// Get returns an attempt.
+// @Summary Get attempt
+// @Description Returns an attempt by ID.
+// @Tags attempts
+// @Produce json
+// @Param attemptID path int true "Attempt ID"
+// @Success 200 {object} api.AttemptGetResponse
+// @Failure 401 {string} string
+// @Failure 403 {string} string
+// @Failure 404 {string} string
+// @Security BearerAuth
+// @Router /attempts/{attemptID} [get]
 func (h *Handler) Get(c fiber.Ctx) error {
 	attemptID, err := strconv.Atoi(c.Params("attemptID"))
 	if err != nil {

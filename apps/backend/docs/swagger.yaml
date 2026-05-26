@@ -1,0 +1,646 @@
+basePath: /
+definitions:
+  api.AttemptGetResponse:
+    properties:
+      code:
+        type: string
+      created_at:
+        type: string
+      duration:
+        type: integer
+      error_message:
+        type: string
+      id:
+        type: integer
+      language:
+        type: string
+      memory_usage:
+        type: integer
+      problem_id:
+        type: integer
+      status:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  api.AttemptListResponse:
+    properties:
+      attempts:
+        items:
+          $ref: '#/definitions/api.AttemptGetResponse'
+        type: array
+    type: object
+  api.CourseGetResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      enrolled:
+        type: boolean
+      id:
+        type: integer
+      lessons:
+        items:
+          $ref: '#/definitions/api.LessonGetResponse'
+        type: array
+      name:
+        type: string
+      status:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      updated_at:
+        type: string
+    type: object
+  api.CourseListResponse:
+    properties:
+      courses:
+        items:
+          $ref: '#/definitions/api.CourseGetResponse'
+        type: array
+    type: object
+  api.EnrollRequest:
+    properties:
+      course_id:
+        type: integer
+    type: object
+  api.LessonGetResponse:
+    properties:
+      content:
+        type: string
+      course_id:
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      position:
+        type: integer
+      problems:
+        items:
+          $ref: '#/definitions/api.ProblemGetResponse'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  api.LoginRequest:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+    type: object
+  api.LoginResponse:
+    properties:
+      access_token:
+        type: string
+      expires_at:
+        type: integer
+    type: object
+  api.ProblemGetResponse:
+    properties:
+      created_at:
+        type: string
+      difficulty:
+        type: string
+      id:
+        type: integer
+      languages:
+        items:
+          type: string
+        type: array
+      lesson_id:
+        type: integer
+      memory_limit:
+        type: integer
+      name:
+        type: string
+      statement:
+        type: string
+      template:
+        $ref: '#/definitions/api.TemplateGetResponse'
+      time_limit:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  api.ProblemSubmitRequest:
+    properties:
+      code:
+        type: string
+      language:
+        type: string
+    type: object
+  api.ProblemSubmitResponse:
+    properties:
+      attempt_id:
+        type: integer
+    type: object
+  api.RefreshResponse:
+    properties:
+      access_token:
+        type: string
+      expires_at:
+        type: integer
+    type: object
+  api.RegisterRequest:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+      repeated_password:
+        type: string
+    type: object
+  api.RegisterResponse:
+    properties:
+      access_token:
+        type: string
+      expires_at:
+        type: integer
+    type: object
+  api.TemplateGetResponse:
+    properties:
+      code:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      language:
+        type: string
+      metadata:
+        type: object
+      problem_id:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  api.UserGetResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      login:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Problum backend API.
+  title: Problum API
+  version: "1.0"
+paths:
+  /attempts:
+    get:
+      description: Returns all attempts for the authenticated user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.AttemptListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: List user attempts
+      tags:
+      - attempts
+  /attempts/{attemptID}:
+    get:
+      description: Returns an attempt by ID.
+      parameters:
+      - description: Attempt ID
+        in: path
+        name: attemptID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.AttemptGetResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Get attempt
+      tags:
+      - attempts
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns an access token. The refresh token
+        is also set as an HTTP-only cookie.
+      parameters:
+      - description: Login request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Login
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      description: Revokes the current refresh token and clears the refresh_token
+        cookie.
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Logout
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      description: Refreshes the access token using the refresh_token cookie.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.RefreshResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Refresh tokens
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user account, logs the user in, and sets the refresh
+        token as an HTTP-only cookie.
+      parameters:
+      - description: Register request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.RegisterResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Register
+      tags:
+      - auth
+  /courses:
+    get:
+      description: Returns all courses for the authenticated user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.CourseListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: List courses
+      tags:
+      - courses
+  /courses/{courseID}:
+    get:
+      description: Returns a course by ID with lessons.
+      parameters:
+      - description: Course ID
+        in: path
+        name: courseID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.CourseGetResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Get course
+      tags:
+      - courses
+  /courses/{courseID}/lessons/{lessonID}:
+    get:
+      description: Returns a lesson by ID with problems.
+      parameters:
+      - description: Course ID
+        in: path
+        name: courseID
+        required: true
+        type: integer
+      - description: Lesson ID
+        in: path
+        name: lessonID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.LessonGetResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Get lesson
+      tags:
+      - lessons
+  /courses/{courseID}/problems/{problemID}:
+    get:
+      description: Returns a problem by ID. Pass language to include a starter template
+        for that language.
+      parameters:
+      - description: Course ID
+        in: path
+        name: courseID
+        required: true
+        type: integer
+      - description: Problem ID
+        in: path
+        name: problemID
+        required: true
+        type: integer
+      - description: Template language
+        in: query
+        name: language
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ProblemGetResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Get problem
+      tags:
+      - problems
+  /courses/{courseID}/problems/{problemID}/attempts:
+    get:
+      description: Returns the authenticated user's attempts for a problem.
+      parameters:
+      - description: Course ID
+        in: path
+        name: courseID
+        required: true
+        type: integer
+      - description: Problem ID
+        in: path
+        name: problemID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.AttemptListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: List problem attempts
+      tags:
+      - attempts
+  /courses/{courseID}/problems/{problemID}/submit:
+    post:
+      consumes:
+      - application/json
+      description: Submits code for a problem and returns the created attempt ID.
+      parameters:
+      - description: Course ID
+        in: path
+        name: courseID
+        required: true
+        type: integer
+      - description: Problem ID
+        in: path
+        name: problemID
+        required: true
+        type: integer
+      - description: Problem submit request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.ProblemSubmitRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ProblemSubmitResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Submit solution
+      tags:
+      - problems
+  /enrollments:
+    post:
+      consumes:
+      - application/json
+      description: Enrolls the authenticated user into a course.
+      parameters:
+      - description: Enroll request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.EnrollRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Enroll course
+      tags:
+      - enrollments
+  /profile:
+    get:
+      description: Returns the authenticated user's profile.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.UserGetResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Get profile
+      tags:
+      - profile
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

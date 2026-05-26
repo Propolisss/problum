@@ -17,6 +17,9 @@ import (
 	"problum/internal/redis"
 	"problum/internal/server"
 
+	_ "problum/docs"
+
+	swaggo "github.com/gofiber/contrib/v3/swaggo"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/healthcheck"
 
@@ -202,6 +205,9 @@ func setupRoutes(
 	attemptSvc AttemptSvc,
 	userHdl *userHandler.Handler,
 ) {
+	// swagger
+	app.httpServer.Get("/swagger/*", swaggo.HandlerDefault)
+
 	// healthchecks
 	app.httpServer.Get(healthcheck.LivenessEndpoint, healthcheck.New())
 	app.httpServer.Get(healthcheck.ReadinessEndpoint, healthcheck.New(healthcheck.Config{
@@ -224,12 +230,12 @@ func setupRoutes(
 	// profile
 	profile := app.httpServer.Group("/profile")
 	profile.Use(middleware.Auth(app.rdb))
-	profile.Get("/", userHdl.Get)
+	profile.Get("", userHdl.Get)
 
 	// course
 	course := app.httpServer.Group("/courses")
 	course.Use(middleware.Auth(app.rdb))
-	course.Get("/", courseHdl.List)
+	course.Get("", courseHdl.List)
 	course.Get("/:courseID", middleware.Course(enrollmentSvc), courseHdl.Get)
 
 	// lesson
@@ -246,7 +252,7 @@ func setupRoutes(
 	// attempt
 	attempt := app.httpServer.Group("/attempts")
 	attempt.Use(middleware.Auth(app.rdb))
-	attempt.Get("/", attemptHdl.ListByUserID)
+	attempt.Get("", attemptHdl.ListByUserID)
 	attempt.Get("/:attemptID", middleware.Attempt(attemptSvc), attemptHdl.Get)
 	problem.Get("/:problemID", middleware.Problem(problemSvc, lessonSvc), problemHdl.Get)
 	problem.Get("/:problemID/attempts", middleware.Problem(problemSvc, lessonSvc), attemptHdl.ListByProblemID)
@@ -255,7 +261,7 @@ func setupRoutes(
 	// enrollment
 	enrollment := app.httpServer.Group("/enrollments")
 	enrollment.Use(middleware.Auth(app.rdb))
-	enrollment.Post("/", enrollmentHdl.Enroll)
+	enrollment.Post("", enrollmentHdl.Enroll)
 }
 
 func (a *App) Run() error {

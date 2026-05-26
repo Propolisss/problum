@@ -32,6 +32,20 @@ func New(cfg *config.Config, svc Service) *Handler {
 	}
 }
 
+// Get returns a problem.
+// @Summary Get problem
+// @Description Returns a problem by ID. Pass language to include a starter template for that language.
+// @Tags problems
+// @Produce json
+// @Param courseID path int true "Course ID"
+// @Param problemID path int true "Problem ID"
+// @Param language query string false "Template language"
+// @Success 200 {object} api.ProblemGetResponse
+// @Failure 401 {string} string
+// @Failure 403 {string} string
+// @Failure 500 {string} string
+// @Security BearerAuth
+// @Router /courses/{courseID}/problems/{problemID} [get]
 func (h *Handler) Get(c fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("problemID"))
 	if err != nil {
@@ -55,6 +69,21 @@ func (h *Handler) Get(c fiber.Ctx) error {
 	return c.JSON(dto.ToAPI(problem))
 }
 
+// Submit submits a solution.
+// @Summary Submit solution
+// @Description Submits code for a problem and returns the created attempt ID.
+// @Tags problems
+// @Accept json
+// @Produce json
+// @Param courseID path int true "Course ID"
+// @Param problemID path int true "Problem ID"
+// @Param request body api.ProblemSubmitRequest true "Problem submit request"
+// @Success 200 {object} api.ProblemSubmitResponse
+// @Failure 401 {string} string
+// @Failure 403 {string} string
+// @Failure 500 {string} string
+// @Security BearerAuth
+// @Router /courses/{courseID}/problems/{problemID}/submit [post]
 func (h *Handler) Submit(c fiber.Ctx) error {
 	submitReq := &api.ProblemSubmitRequest{}
 	if err := c.Bind().JSON(submitReq); err != nil {

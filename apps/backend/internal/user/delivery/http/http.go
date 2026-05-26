@@ -29,6 +29,17 @@ func New(cfg *config.Config, svc Service) *Handler {
 	}
 }
 
+// Get returns the current user.
+// @Summary Get profile
+// @Description Returns the authenticated user's profile.
+// @Tags profile
+// @Produce json
+// @Success 200 {object} api.UserGetResponse
+// @Failure 400 {string} string
+// @Failure 401 {string} string
+// @Failure 500 {string} string
+// @Security BearerAuth
+// @Router /profile [get]
 func (h *Handler) Get(c fiber.Ctx) error {
 	userID, ok := c.Locals("user_id").(int)
 	if !ok {

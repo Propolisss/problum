@@ -12,6 +12,8 @@ BACKEND_DIR := apps/backend
 GOLANGCI_CONFIG := ../../.golangci.yml
 COVERAGE_OUT := coverage.out
 COVERAGE_HTML := coverage.html
+SWAG := go run github.com/swaggo/swag/cmd/swag@v1.16.6
+SWAG_DIRS := cmd/app,internal/api,internal/auth/delivery/http,internal/course/delivery/http,internal/lesson/delivery/http,internal/problem/delivery/http,internal/attempt/delivery/http,internal/enrollment/delivery/http,internal/user/delivery/http
 
 .PHONY: up
 up:
@@ -24,6 +26,10 @@ down:
 .PHONY: generate
 generate:
 	cd ${BACKEND_DIR} && go generate ./internal/...
+
+.PHONY: swagger
+swagger:
+	cd ${BACKEND_DIR} && ${SWAG} init -g main.go -d ${SWAG_DIRS} --parseInternal -o docs
 
 .PHONY: fmt
 fmt:

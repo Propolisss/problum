@@ -10,7 +10,7 @@ type AttemptGetResponse struct {
 	ID           int           `json:"id"`
 	UserID       int           `json:"user_id"`
 	ProblemID    int           `json:"problem_id"`
-	Duration     time.Duration `json:"duration"`
+	Duration     time.Duration `json:"duration" swaggertype:"integer"`
 	MemoryUsage  int64         `json:"memory_usage"`
 	Language     string        `json:"language"`
 	Code         string        `json:"code"`

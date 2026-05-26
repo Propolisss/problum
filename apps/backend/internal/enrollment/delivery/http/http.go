@@ -30,6 +30,17 @@ func New(cfg *config.Config, svc Service) *Handler {
 	}
 }
 
+// Enroll enrolls the current user.
+// @Summary Enroll course
+// @Description Enrolls the authenticated user into a course.
+// @Tags enrollments
+// @Accept json
+// @Param request body api.EnrollRequest true "Enroll request"
+// @Success 200 {string} string
+// @Failure 401 {string} string
+// @Failure 500 {string} string
+// @Security BearerAuth
+// @Router /enrollments [post]
 func (h *Handler) Enroll(c fiber.Ctx) error {
 	enrollReq := &api.EnrollRequest{}
 	if err := c.Bind().JSON(enrollReq); err != nil {
