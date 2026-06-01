@@ -36,6 +36,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -source=worker.go -destination=mocks/mock_service.go -package=mocks
 type AttemptService interface {
 	Submit(context.Context, *attemptDTO.Attempt) (int, error)
 	Update(ctx context.Context, attempt *attemptDTO.Attempt) error

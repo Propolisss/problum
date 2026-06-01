@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../features/auth/hooks'
 import { Button, Input } from '../components/ui'
+import ThemeToggle from '../components/theme/ThemeToggle'
 
 export default function Login() {
     const { login } = useAuth()
@@ -36,8 +37,11 @@ export default function Login() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow">
+        <div className="min-h-screen flex items-center justify-center bg-background px-6 text-foreground">
+            <div className="absolute right-6 top-6">
+                <ThemeToggle />
+            </div>
+            <div className="w-full max-w-md p-8 bg-card text-card-foreground border border-border rounded-2xl shadow">
                 <h1 className="text-2xl font-semibold mb-6">Вход</h1>
                 <form onSubmit={submit} className="space-y-4">
                     <div>
@@ -70,7 +74,7 @@ export default function Login() {
                             {loading ? 'Вхожу...' : 'Войти'}
                         </Button>
                         <div className="text-center">
-                            <Link to="/register" className="text-sm text-gray-600 hover:underline">
+                            <Link to="/register" className="text-sm text-muted-foreground hover:text-foreground hover:underline">
                                 Регистрация
                             </Link>
                         </div>

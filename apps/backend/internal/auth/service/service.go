@@ -22,6 +22,7 @@ import (
 
 var HMACRefreshTokenKey = []byte("refresh_token_key")
 
+//go:generate go run go.uber.org/mock/mockgen -source=service.go -destination=mocks/mock_service.go -package=mocks
 type UserService interface {
 	FindByLogin(context.Context, string) (*userDTO.User, error)
 	Create(context.Context, *userDTO.User) (*userDTO.User, error)

@@ -14,6 +14,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -source=http.go -destination=mocks/mock_service.go -package=mocks
 type Service interface {
 	Login(context.Context, string, string) (*dto.LoginDTO, error)
 	Register(context.Context, string, string, string) (*dto.RegisterDTO, error)
@@ -33,6 +34,17 @@ func New(cfg *config.Config, svc Service) *Handler {
 	}
 }
 
+// Login authenticates a user.
+// @Summary Login
+// @Description Authenticates a user and returns an access token. The refresh token is also set as an HTTP-only cookie.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body api.LoginRequest true "Login request"
+// @Success 200 {object} api.LoginResponse
+// @Failure 400 {string} string
+// @Failure 500 {string} string
+// @Router /auth/login [post]
 func (h *Handler) Login(c fiber.Ctx) error {
 	loginReq := &api.LoginRequest{}
 	if err := c.Bind().JSON(loginReq); err != nil {
@@ -60,6 +72,17 @@ func (h *Handler) Login(c fiber.Ctx) error {
 	})
 }
 
+// Register creates a user account.
+// @Summary Register
+// @Description Creates a new user account, logs the user in, and sets the refresh token as an HTTP-only cookie.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body api.RegisterRequest true "Register request"
+// @Success 200 {object} api.RegisterResponse
+// @Failure 400 {string} string
+// @Failure 500 {string} string
+// @Router /auth/register [post]
 func (h *Handler) Register(c fiber.Ctx) error {
 	registerReq := &api.RegisterRequest{}
 	if err := c.Bind().JSON(registerReq); err != nil {
@@ -89,6 +112,14 @@ func (h *Handler) Register(c fiber.Ctx) error {
 	})
 }
 
+// Refresh rotates tokens.
+// @Summary Refresh tokens
+// @Description Refreshes the access token using the refresh_token cookie.
+// @Tags auth
+// @Produce json
+// @Success 200 {object} api.RefreshResponse
+// @Failure 401 {string} string
+// @Router /auth/refresh [post]
 func (h *Handler) Refresh(c fiber.Ctx) error {
 	refresh := c.Cookies("refresh_token")
 	if refresh == "" {
@@ -116,6 +147,15 @@ func (h *Handler) Refresh(c fiber.Ctx) error {
 	})
 }
 
+// Logout revokes the current session.
+// @Summary Logout
+// @Description Revokes the current refresh token and clears the refresh_token cookie.
+// @Tags auth
+// @Success 204 {string} string
+// @Failure 401 {string} string
+// @Failure 500 {string} string
+// @Security BearerAuth
+// @Router /auth/logout [post]
 func (h *Handler) Logout(c fiber.Ctx) error {
 	refresh := c.Cookies("refresh_token")
 	if refresh == "" {

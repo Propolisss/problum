@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -source=service.go -destination=mocks/mock_service.go -package=mocks
 type Repository interface {
 	Enroll(context.Context, int, int) error
 	Get(ctx context.Context, courseID, userID int) (*model.Enrollment, error)

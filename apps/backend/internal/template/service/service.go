@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -source=service.go -destination=mocks/mock_service.go -package=mocks
 type Repository interface {
 	GetByProblemIDAndLanguage(context.Context, int, string) (*model.Template, error)
 	GetLanguagesByProblemID(context.Context, int) ([]string, error)

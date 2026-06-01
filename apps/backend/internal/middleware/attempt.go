@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -destination=mocks/mock_service.go -package=mocks problum/internal/middleware AttemptService,EnrollmentService,LessonService,ProblemService
 type AttemptService interface {
 	Get(context.Context, int) (*attemptDTO.Attempt, error)
 }

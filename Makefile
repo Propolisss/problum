@@ -8,6 +8,12 @@ PLATFORMS := linux/amd64,linux/arm64
 
 TESTER_IMAGE := problum-integration-tester
 NETWORK_NAME := problum_network
+BACKEND_DIR := apps/backend
+GOLANGCI_CONFIG := ../../.golangci.yml
+COVERAGE_OUT := coverage.out
+COVERAGE_HTML := coverage.html
+SWAG := go run github.com/swaggo/swag/cmd/swag@v1.16.6
+SWAG_DIRS := cmd/app,internal/api,internal/auth/delivery/http,internal/course/delivery/http,internal/lesson/delivery/http,internal/problem/delivery/http,internal/attempt/delivery/http,internal/enrollment/delivery/http,internal/user/delivery/http
 
 .PHONY: up
 up:
@@ -16,6 +22,43 @@ up:
 .PHONY: down
 down:
 	docker compose -f ${DOCKER_COMPOSE_FILE} down
+
+.PHONY: generate
+generate:
+	cd ${BACKEND_DIR} && go generate ./internal/...
+
+.PHONY: swagger
+swagger:
+	cd ${BACKEND_DIR} && ${SWAG} init -g main.go -d ${SWAG_DIRS} --parseInternal -o docs
+
+.PHONY: fmt
+fmt:
+	cd ${BACKEND_DIR} && go fmt ./...
+
+.PHONY: tests
+tests:
+	cd ${BACKEND_DIR} && go test -count=1 -race ./internal/...
+
+.PHONY: tests-coverage
+tests-coverage:
+	cd ${BACKEND_DIR} && \
+	COVERPKG=$$(go list ./internal/... | grep -v '/mocks' | paste -sd, -) && \
+	go test -count=1 -race -covermode=atomic -coverpkg="$$COVERPKG" -coverprofile=${COVERAGE_OUT} ./internal/... && \
+	grep -v -E "mock|_mock.go|/mocks/" ${COVERAGE_OUT} > ${COVERAGE_OUT}.tmp && \
+	mv ${COVERAGE_OUT}.tmp ${COVERAGE_OUT} && \
+	go tool cover -func=${COVERAGE_OUT} | tail -n 1
+
+.PHONY: tests-coverage-open
+tests-coverage-open: tests-coverage
+	cd ${BACKEND_DIR} && go tool cover -html=${COVERAGE_OUT}
+
+.PHONY: clean
+clean:
+	find . -type f \( -name '*.out' -o -name '${COVERAGE_HTML}' \) -delete
+
+.PHONY: lint
+lint:
+	cd ${BACKEND_DIR} && golangci-lint run --config ${GOLANGCI_CONFIG} ./...
 
 .PHONY: push
 push:

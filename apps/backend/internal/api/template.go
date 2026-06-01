@@ -10,7 +10,7 @@ type TemplateGetResponse struct {
 	ProblemID int             `json:"problem_id"`
 	Language  string          `json:"language"`
 	Code      string          `json:"code"`
-	Metadata  json.RawMessage `json:"metadata"`
+	Metadata  json.RawMessage `json:"metadata" swaggertype:"object"`
 	CreatedAt time.Time       `json:"created_at"`
 	UpdatedAt time.Time       `json:"updated_at"`
 }

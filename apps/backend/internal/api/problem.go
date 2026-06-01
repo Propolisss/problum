@@ -12,7 +12,7 @@ type ProblemGetResponse struct {
 	Name        string              `json:"name"`
 	Statement   string              `json:"statement"`
 	Difficulty  string              `json:"difficulty"`
-	TimeLimit   time.Duration       `json:"time_limit"`
+	TimeLimit   time.Duration       `json:"time_limit" swaggertype:"integer"`
 	MemoryLimit int64               `json:"memory_limit"`
 	CreatedAt   time.Time           `json:"created_at"`
 	UpdatedAt   time.Time           `json:"updated_at"`

@@ -4,6 +4,7 @@ import type { editor } from 'monaco-editor';
 
 import ruffInit, { Workspace, PositionEncoding } from '@astral-sh/ruff-wasm-web';
 import initGoFmt, { format as formatGo } from '@wasm-fmt/gofmt/vite';
+import { useTheme } from '../features/theme/hooks';
 
 type Props = {
     value: string;
@@ -26,6 +27,8 @@ export default function CodeEditor({
     height = '400px',
     readOnly = false,
 }: Props) {
+    const { theme } = useTheme();
+
     const handleEditorMount = (editorInstance: editor.IStandaloneCodeEditor, monacoInstance: any) => {
         if (!isGoFmtInitialized) {
             initGoFmt()
@@ -134,6 +137,7 @@ export default function CodeEditor({
         <div className="rounded-lg overflow-hidden border h-full">
             <Editor
                 height={height}
+                theme={theme === 'dark' ? 'vs-dark' : 'light'}
                 defaultLanguage={language}
                 language={language}
                 value={value}
